@@ -2,6 +2,7 @@
 #include <QPixmapCache>
 #include <QStyleOptionComplex>
 #include "NinePatch.h"
+#include <math.h>
 
 #define MBI_NORMAL                  1
 #define MBI_HOT                     2
@@ -466,7 +467,7 @@ void MyStyle::drawControl(ControlElement ce, const QStyleOption *option, QPainte
 {
 	bool disabled = !(option->state & State_Enabled);
 #ifdef Q_OS_MAC
-	if (element == CE_ToolBar) {
+    if (ce == CE_ToolBar) {
 		int x = option->rect.x();
 		int y = option->rect.y();
 		int w = option->rect.width();
@@ -474,9 +475,9 @@ void MyStyle::drawControl(ControlElement ce, const QStyleOption *option, QPainte
 		p->fillRect(x, y + h - 1, w, 1, QColor(32, 32, 32));
 		return;
 	}
-	if (element == CE_ToolButtonLabel) {
-		//			return;
-	}
+//  if (ce == CE_ToolButtonLabel) {
+//		return;
+//	}
 #endif
 	if (ce == CE_PushButtonBevel) {
 		enum PartID {
