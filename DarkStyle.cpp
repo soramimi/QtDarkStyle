@@ -8,13 +8,15 @@
 #define MBI_HOT                     2
 #define MBI_PUSHED                  3
 #define MBI_DISABLED                4
+
+namespace {
+
 static const int windowsItemFrame        =  2; // menu item frame width
 static const int windowsItemHMargin      =  3; // menu item hor text margin
 static const int windowsItemVMargin      =  4; // menu item ver text margin
 static const int windowsArrowHMargin     =  6; // arrow horizontal margin
 static const int windowsRightBorder      = 15; // right border on windows
 
-namespace {
 
 class Lighten {
 private:
@@ -90,14 +92,14 @@ void drawFrame(QPainter *pr, QRect const &r, QColor color_topleft, QColor color_
 
 // MyStyle
 
-QString MyStyle::pixmapkey(const QString &name, const QString &role, const QSize &size)
+QString DarkStyle::pixmapkey(const QString &name, const QString &role, const QSize &size)
 {
 	QString key = "%1:%2:%3:%4";
 	key = key.arg(name).arg(role).arg(size.width()).arg(size.height());
 	return key;
 }
 
-MyStyle::ButtonImages MyStyle::generateButtonImages(QString const &path)
+DarkStyle::ButtonImages DarkStyle::generateButtonImages(QString const &path)
 {
 	QImage source = loadImage(path);
 	ButtonImages buttons;
@@ -132,7 +134,7 @@ MyStyle::ButtonImages MyStyle::generateButtonImages(QString const &path)
 	return buttons;
 }
 
-QPixmap MyStyle::pixmapFromImage(const QImage &image, QSize size) const
+QPixmap DarkStyle::pixmapFromImage(const QImage &image, QSize size) const
 {
 	QString key = pixmapkey(image.text("name"), image.text("role"), size);
 
@@ -146,7 +148,7 @@ QPixmap MyStyle::pixmapFromImage(const QImage &image, QSize size) const
 	return t.pm;
 }
 
-void MyStyle::drawNinePatchImage(QPainter *p, const QImage &image, const QRect &r, int w, int h) const
+void DarkStyle::drawNinePatchImage(QPainter *p, const QImage &image, const QRect &r, int w, int h) const
 {
 	QImage im = createImageFromNinePatchImage(image, w, h);
 	im.setText("name", image.text("name"));
@@ -155,12 +157,12 @@ void MyStyle::drawNinePatchImage(QPainter *p, const QImage &image, const QRect &
 	p->drawPixmap(r.x(), r.y(), pm);
 }
 
-void MyStyle::polish(QPalette &palette)
+void DarkStyle::polish(QPalette &palette)
 {
 	palette = QPalette(QColor(64, 64, 64));
 }
 
-void MyStyle::drawGutter(QPainter *p, const QRect &r) const
+void DarkStyle::drawGutter(QPainter *p, const QRect &r) const
 {
 	int x = r.x();
 	int y = r.y();
@@ -180,7 +182,7 @@ void MyStyle::drawGutter(QPainter *p, const QRect &r) const
 	}
 }
 
-void MyStyle::selectedMenuFrame(const QStyleOption *option, QPainter *p, const QWidget *widget) const
+void DarkStyle::selectedMenuFrame(const QStyleOption *option, QPainter *p, const QWidget *widget) const
 {
 #if 0
 	drawPrimitive(PE_PanelButtonTool, option, p, widget); // TODO:
@@ -223,7 +225,7 @@ void MyStyle::selectedMenuFrame(const QStyleOption *option, QPainter *p, const Q
 #endif
 }
 
-void MyStyle::drawButton(QPainter *p, const QStyleOption *option) const
+void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
 {
 	int w = option->rect.width();
 	int h = option->rect.height();
@@ -290,7 +292,7 @@ void MyStyle::drawButton(QPainter *p, const QStyleOption *option) const
 	}
 }
 
-void MyStyle::drawToolButton(QPainter *p, const QStyleOption *option) const
+void DarkStyle::drawToolButton(QPainter *p, const QStyleOption *option) const
 {
 	p->save();
 
@@ -340,7 +342,7 @@ void MyStyle::drawToolButton(QPainter *p, const QStyleOption *option) const
 	p->restore();
 }
 
-void MyStyle::drawRaisedFrame(QPainter *p, QRect const &rect, QPalette const &palette)
+void DarkStyle::drawRaisedFrame(QPainter *p, QRect const &rect, QPalette const &palette)
 {
 	p->save();
 	int x = rect.x();
@@ -358,7 +360,7 @@ void MyStyle::drawRaisedFrame(QPainter *p, QRect const &rect, QPalette const &pa
 	p->restore();
 }
 
-MyStyle::MyStyle()
+DarkStyle::DarkStyle()
 {
 	button_normal = loadImage(QLatin1String(":/darktheme/button/button_normal.png"), QLatin1String("normal"));
 	button_press = loadImage(QLatin1String(":/darktheme/button/button_press.png"), QLatin1String("press"));
@@ -379,7 +381,7 @@ MyStyle::MyStyle()
 	progress_vert.load(QLatin1String(":/darktheme/progress/vert.png"));
 }
 
-int MyStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
+int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
 	if (metric == PM_SliderLength) {
 		return std::min(widget->width(), widget->height());
@@ -387,7 +389,7 @@ int MyStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const Q
 	return QProxyStyle::pixelMetric(metric, option, widget);
 }
 
-QRect MyStyle::subControlRect(ComplexControl cc, const QStyleOptionComplex *option, SubControl sc, const QWidget *widget) const
+QRect DarkStyle::subControlRect(ComplexControl cc, const QStyleOptionComplex *option, SubControl sc, const QWidget *widget) const
 {
 	if (cc == CC_Slider && sc == SC_SliderGroove) {
 		return widget->rect();
@@ -504,7 +506,7 @@ QRect MyStyle::subControlRect(ComplexControl cc, const QStyleOptionComplex *opti
 	return QProxyStyle::subControlRect(cc, option, sc, widget);
 }
 
-void MyStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, QPainter *p, const QWidget *widget) const
+void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, QPainter *p, const QWidget *widget) const
 {
 	if (pe == PE_PanelMenu) {
 		QRect r = option->rect;
@@ -560,7 +562,7 @@ void MyStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, QPa
 	QProxyStyle::drawPrimitive(pe, option, p, widget);
 }
 
-void MyStyle::drawControl(ControlElement ce, const QStyleOption *option, QPainter *p, const QWidget *widget) const
+void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPainter *p, const QWidget *widget) const
 {
 	bool disabled = !(option->state & State_Enabled);
 #ifdef Q_OS_MAC
@@ -1114,7 +1116,7 @@ void MyStyle::drawControl(ControlElement ce, const QStyleOption *option, QPainte
 	QProxyStyle::drawControl(ce, option, p, widget);
 }
 
-void MyStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex *option, QPainter *p, const QWidget *widget) const
+void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex *option, QPainter *p, const QWidget *widget) const
 {
 	if (cc == QStyle::CC_ToolButton) {
 		QStyle::State flags = option->state;

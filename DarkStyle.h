@@ -4,10 +4,7 @@
 #include <QPainter>
 #include <QProxyStyle>
 
-
-
-
-class MyStyle : public QProxyStyle {
+class DarkStyle : public QProxyStyle {
 public:
 	class ButtonImages {
 	public:
@@ -48,7 +45,7 @@ private:
 	void drawToolButton(QPainter *p, QStyleOption const *option) const;
 	static void drawRaisedFrame(QPainter *p, const QRect &rect, const QPalette &palette);
 public:
-	MyStyle();
+	DarkStyle();
 	void polish(QPalette &palette);
 public:
 	int pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const;
@@ -57,6 +54,5 @@ public:
 	void drawControl(ControlElement ce, const QStyleOption *option, QPainter *p, const QWidget *widget) const;
 	void drawComplexControl(ComplexControl cc, const QStyleOptionComplex *option, QPainter *p, const QWidget *widget) const;
 };
-
 
 #endif // DARKSTYLE_H

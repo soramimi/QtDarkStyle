@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 
-	a.setStyle(new MyStyle);
+	a.setStyle(new DarkStyle);
 
 	MainWindow w;
 	w.show();
