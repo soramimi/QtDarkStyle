@@ -393,6 +393,96 @@ QRect MyStyle::subControlRect(ComplexControl cc, const QStyleOptionComplex *opti
 			return rect;
 		}
 	}
+	if (cc == CC_GroupBox) {
+		QRect rect;
+		if (const QStyleOptionGroupBox *groupBox = qstyleoption_cast<const QStyleOptionGroupBox *>(option)) {
+			switch (sc) {
+			case SC_GroupBoxFrame:
+				// FALL THROUGH
+			case SC_GroupBoxContents:
+				{
+					int topMargin = 0;
+					int topHeight = 0;
+					int bottomMargin = 0;
+					int noLabelMargin = 0;
+					QRect frameRect = groupBox->rect;
+					int verticalAlignment = styleHint(SH_GroupBox_TextLabelVerticalAlignment, groupBox, widget);
+					if (groupBox->text.size()) {
+						topHeight = groupBox->fontMetrics.height();
+						if (verticalAlignment & Qt::AlignVCenter) {
+							topMargin = topHeight / 2;
+						} else if (verticalAlignment & Qt::AlignTop) {
+							topMargin = -topHeight/2;
+						}
+					} else {
+						topHeight = groupBox->fontMetrics.height();
+						noLabelMargin = topHeight / 2;
+						if (verticalAlignment & Qt::AlignVCenter) {
+							topMargin = topHeight / 4 - 4;
+							bottomMargin = topHeight / 4 - 4;
+						} else if (verticalAlignment & Qt::AlignTop) {
+							topMargin = topHeight/2 - 4;
+							bottomMargin = topHeight/2 - 4;
+						}
+					}
+
+					if (sc == SC_GroupBoxFrame) {
+						frameRect.setTop(topMargin);
+						frameRect.setBottom(frameRect.height() + bottomMargin);
+						rect = frameRect;
+						break;
+					}
+
+					int frameWidth = 0;
+					if ((groupBox->features & QStyleOptionFrameV2::Flat) == 0) {
+						frameWidth = pixelMetric(PM_DefaultFrameWidth, groupBox, widget);
+					}
+					rect = frameRect.adjusted(frameWidth, frameWidth + topHeight, -frameWidth, -frameWidth - noLabelMargin);
+					break;
+				}
+			case SC_GroupBoxCheckBox:
+				// FALL THROUGH
+			case SC_GroupBoxLabel:
+				{
+					QFontMetrics fontMetrics = groupBox->fontMetrics;
+					int h = fontMetrics.height();
+					int tw = fontMetrics.size(Qt::TextShowMnemonic, groupBox->text + QLatin1Char(' ')).width();
+					int marg = (groupBox->features & QStyleOptionFrameV2::Flat) ? 0 : 8;
+					rect = groupBox->rect.adjusted(marg, 0, -marg, 0);
+					rect.setHeight(h);
+
+					int indicatorWidth = pixelMetric(PM_IndicatorWidth, option, widget);
+					int indicatorSpace = pixelMetric(PM_CheckBoxLabelSpacing, option, widget) - 1;
+					bool hasCheckBox = groupBox->subControls & QStyle::SC_GroupBoxCheckBox;
+					int checkBoxSize = hasCheckBox ? (indicatorWidth + indicatorSpace) : 0;
+
+					// Adjusted rect for label + indicatorWidth + indicatorSpace
+					QRect totalRect = alignedRect(groupBox->direction, groupBox->textAlignment, QSize(tw + checkBoxSize, h), rect);
+					// Adjust totalRect if checkbox is set
+					if (hasCheckBox) {
+						bool ltr = groupBox->direction == Qt::LeftToRight;
+						int left = 0;
+						// Adjust for check box
+						if (sc == SC_GroupBoxCheckBox) {
+							int indicatorHeight = pixelMetric(PM_IndicatorHeight, option, widget);
+							left = ltr ? totalRect.left() : (totalRect.right() - indicatorWidth);
+							int top = totalRect.top() + (fontMetrics.height() - indicatorHeight) / 2;
+							totalRect.setRect(left, top, indicatorWidth, indicatorHeight);
+							// Adjust for label
+						} else {
+							left = ltr ? (totalRect.left() + checkBoxSize - 2) : totalRect.left();
+							totalRect.setRect(left, totalRect.top(), totalRect.width() - checkBoxSize, totalRect.height());
+						}
+					}
+					rect = totalRect;
+					break;
+				}
+			default:
+				break;
+			}
+		}
+		return rect;
+	}
 	return QProxyStyle::subControlRect(cc, option, sc, widget);
 }
 
