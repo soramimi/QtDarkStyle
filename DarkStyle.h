@@ -46,6 +46,7 @@ private:
 	void selectedMenuFrame(const QStyleOption *option, QPainter *p, QWidget const *widget) const;
 	void drawButton(QPainter *p, QStyleOption const *option) const;
 	void drawToolButton(QPainter *p, QStyleOption const *option) const;
+	static void drawRaisedFrame(QPainter *p, const QRect &rect, const QPalette &palette);
 public:
 	MyStyle();
 	void polish(QPalette &palette);

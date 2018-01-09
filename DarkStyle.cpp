@@ -340,6 +340,24 @@ void MyStyle::drawToolButton(QPainter *p, const QStyleOption *option) const
 	p->restore();
 }
 
+void MyStyle::drawRaisedFrame(QPainter *p, QRect const &rect, QPalette const &palette)
+{
+	p->save();
+	int x = rect.x();
+	int y = rect.y();
+	int w = rect.width();
+	int h = rect.height();
+	p->setClipRect(x, y, w, h);
+	p->fillRect(x, y, w, h, palette.color(QPalette::Window));
+	p->fillRect(x, y, w - 1, 1, palette.color(QPalette::Light));
+	p->fillRect(x, y, 1, h - 1, palette.color(QPalette::Light));
+	p->fillRect(x + 1, y + h - 2, w - 2, 1, palette.color(QPalette::Dark));
+	p->fillRect(x + w - 2, y + 1, 1, h - 2, palette.color(QPalette::Dark));
+	p->fillRect(x, y + h - 1, w, 1, palette.color(QPalette::Shadow));
+	p->fillRect(x + w - 1, y, 1, h, palette.color(QPalette::Shadow));
+	p->restore();
+}
+
 MyStyle::MyStyle()
 {
 	button_normal = loadImage(QLatin1String(":/darktheme/button/button_normal.png"), QLatin1String("normal"));
@@ -509,18 +527,7 @@ void MyStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, QPa
 		return;
 	}
 	if (pe == PE_FrameTabWidget) {
-		QColor basecolor = option->palette.color(QPalette::Window);
-		p->save();
-		if (const QStyleOptionTabWidgetFrame *twf = qstyleoption_cast<const QStyleOptionTabWidgetFrame *>(option)) {
-			p->setPen(Qt::red);
-			p->setPen(Qt::blue);
-		}
-		QStyleOption opt;
-		opt.init(widget);
-		opt.rect = option->rect;
-		opt.state |= State_Raised;
-		QProxyStyle::drawPrimitive(PE_FrameButtonBevel, &opt, p, widget);
-		p->restore();
+		drawRaisedFrame(p, option->rect, option->palette);
 		return;
 	}
 	if (pe == PE_PanelLineEdit) {
@@ -656,8 +663,6 @@ void MyStyle::drawControl(ControlElement ce, const QStyleOption *option, QPainte
 			if (option->direction == Qt::LeftToRight) {
 				checkcol += rect.x();
 			}
-			QPoint p1 = QStyle::visualPos(option->direction, menuitem->rect, QPoint(checkcol, rect.top()));
-			QPoint p2 = QStyle::visualPos(option->direction, menuitem->rect, QPoint(checkcol, rect.bottom()));
 
 			int x, y, w, h;
 			menuitem->rect.getRect(&x, &y, &w, &h);
@@ -776,275 +781,275 @@ void MyStyle::drawControl(ControlElement ce, const QStyleOption *option, QPainte
 			int y2 = r2.bottom();
 			switch (tab->shape) {
 			default:
-			{
-				p->save();
+				{
+					p->save();
 
-				QRect rect(tab->rect);
-				int tabOverlap = onlyOne ? 0 : pixelMetric(PM_TabBarTabOverlap, option, widget);
+					QRect rect(tab->rect);
+					int tabOverlap = onlyOne ? 0 : pixelMetric(PM_TabBarTabOverlap, option, widget);
 
-				if (!selected) {
+					if (!selected) {
+						switch (tab->shape) {
+						case QTabBar::TriangularNorth:
+							rect.adjust(0, 0, 0, -tabOverlap);
+							if(!selected) rect.adjust(1, 1, -1, 0);
+							break;
+						case QTabBar::TriangularSouth:
+							rect.adjust(0, tabOverlap, 0, 0);
+							if(!selected) rect.adjust(1, 0, -1, -1);
+							break;
+						case QTabBar::TriangularEast:
+							rect.adjust(tabOverlap, 0, 0, 0);
+							if(!selected) rect.adjust(0, 1, -1, -1);
+							break;
+						case QTabBar::TriangularWest:
+							rect.adjust(0, 0, -tabOverlap, 0);
+							if(!selected) rect.adjust(1, 1, 0, -1);
+							break;
+						default:
+							break;
+						}
+					}
+
+					p->setPen(QPen(tab->palette.foreground(), 0));
+					if (selected) {
+						p->setBrush(tab->palette.background());
+					} else {
+						if (widget && widget->parentWidget()) {
+							p->setBrush(widget->parentWidget()->palette().shadow());
+						} else {
+							p->setBrush(tab->palette.shadow());
+						}
+					}
+
+					int y;
+					int x;
+					QPolygon a(10);
 					switch (tab->shape) {
 					case QTabBar::TriangularNorth:
-						rect.adjust(0, 0, 0, -tabOverlap);
-						if(!selected) rect.adjust(1, 1, -1, 0);
-						break;
 					case QTabBar::TriangularSouth:
-						rect.adjust(0, tabOverlap, 0, 0);
-						if(!selected) rect.adjust(1, 0, -1, -1);
-						break;
+						{
+							a.setPoint(0, 0, -1);
+							a.setPoint(1, 0, 0);
+							y = rect.height() - 2;
+							x = y / 3;
+							a.setPoint(2, x++, y - 1);
+							++x;
+							a.setPoint(3, x++, y++);
+							a.setPoint(4, x, y);
+
+							int i;
+							int right = rect.width() - 1;
+							for (i = 0; i < 5; ++i) {
+								a.setPoint(9 - i, right - a.point(i).x(), a.point(i).y());
+							}
+							if (tab->shape == QTabBar::TriangularNorth) {
+								for (i = 0; i < 10; ++i) {
+									a.setPoint(i, a.point(i).x(), rect.height() - 1 - a.point(i).y());
+								}
+							}
+
+							a.translate(rect.left(), rect.top());
+							p->setRenderHint(QPainter::Antialiasing);
+							p->translate(0, 0.5);
+
+							QPainterPath path;
+							path.addPolygon(a);
+							p->drawPath(path);
+							break;
+						}
 					case QTabBar::TriangularEast:
-						rect.adjust(tabOverlap, 0, 0, 0);
-						if(!selected) rect.adjust(0, 1, -1, -1);
-						break;
 					case QTabBar::TriangularWest:
-						rect.adjust(0, 0, -tabOverlap, 0);
-						if(!selected) rect.adjust(1, 1, 0, -1);
-						break;
+						{
+							a.setPoint(0, -1, 0);
+							a.setPoint(1, 0, 0);
+							x = rect.width() - 2;
+							y = x / 3;
+							a.setPoint(2, x - 1, y++);
+							++y;
+							a.setPoint(3, x++, y++);
+							a.setPoint(4, x, y);
+							int i;
+							int bottom = rect.height() - 1;
+							for (i = 0; i < 5; ++i) {
+								a.setPoint(9 - i, a.point(i).x(), bottom - a.point(i).y());
+							}
+							if (tab->shape == QTabBar::TriangularWest) {
+								for (i = 0; i < 10; ++i) {
+									a.setPoint(i, rect.width() - 1 - a.point(i).x(), a.point(i).y());
+								}
+							}
+							a.translate(rect.left(), rect.top());
+							p->setRenderHint(QPainter::Antialiasing);
+							p->translate(0.5, 0);
+							QPainterPath path;
+							path.addPolygon(a);
+							p->drawPath(path);
+							break;
+						}
 					default:
 						break;
 					}
+					p->restore();
 				}
-
-				p->setPen(QPen(tab->palette.foreground(), 0));
-				if (selected) {
-					p->setBrush(tab->palette.background());
-				} else {
-					if (widget && widget->parentWidget()) {
-						p->setBrush(widget->parentWidget()->palette().shadow());
-					} else {
-						p->setBrush(tab->palette.shadow());
-					}
-				}
-
-				int y;
-				int x;
-				QPolygon a(10);
-				switch (tab->shape) {
-				case QTabBar::TriangularNorth:
-				case QTabBar::TriangularSouth:
-				{
-					a.setPoint(0, 0, -1);
-					a.setPoint(1, 0, 0);
-					y = rect.height() - 2;
-					x = y / 3;
-					a.setPoint(2, x++, y - 1);
-					++x;
-					a.setPoint(3, x++, y++);
-					a.setPoint(4, x, y);
-
-					int i;
-					int right = rect.width() - 1;
-					for (i = 0; i < 5; ++i) {
-						a.setPoint(9 - i, right - a.point(i).x(), a.point(i).y());
-					}
-					if (tab->shape == QTabBar::TriangularNorth) {
-						for (i = 0; i < 10; ++i) {
-							a.setPoint(i, a.point(i).x(), rect.height() - 1 - a.point(i).y());
-						}
-					}
-
-					a.translate(rect.left(), rect.top());
-					p->setRenderHint(QPainter::Antialiasing);
-					p->translate(0, 0.5);
-
-					QPainterPath path;
-					path.addPolygon(a);
-					p->drawPath(path);
-					break;
-				}
-				case QTabBar::TriangularEast:
-				case QTabBar::TriangularWest:
-				{
-					a.setPoint(0, -1, 0);
-					a.setPoint(1, 0, 0);
-					x = rect.width() - 2;
-					y = x / 3;
-					a.setPoint(2, x - 1, y++);
-					++y;
-					a.setPoint(3, x++, y++);
-					a.setPoint(4, x, y);
-					int i;
-					int bottom = rect.height() - 1;
-					for (i = 0; i < 5; ++i) {
-						a.setPoint(9 - i, a.point(i).x(), bottom - a.point(i).y());
-					}
-					if (tab->shape == QTabBar::TriangularWest) {
-						for (i = 0; i < 10; ++i) {
-							a.setPoint(i, rect.width() - 1 - a.point(i).x(), a.point(i).y());
-						}
-					}
-					a.translate(rect.left(), rect.top());
-					p->setRenderHint(QPainter::Antialiasing);
-					p->translate(0.5, 0);
-					QPainterPath path;
-					path.addPolygon(a);
-					p->drawPath(path);
-					break;
-				}
-				default:
-					break;
-				}
-				p->restore();
-			}
 				break;
 			case QTabBar::RoundedNorth:
-			{
-				if (!selected) {
-					y1 += 2;
-					x1 += onlyOne || firstTab ? borderThinkness : 0;
-					x2 -= onlyOne || lastTab ? borderThinkness : 0;
-				}
-
-				p->fillRect(QRect(x1 + 1, y1 + 1, (x2 - x1) - 1, (y2 - y1) - 2), tab->palette.background());
-
-				// Delete border
-				if (selected) {
-					p->fillRect(QRect(x1,y2-1,x2-x1,1), tab->palette.background());
-					p->fillRect(QRect(x1,y2,x2-x1,1), tab->palette.background());
-				}
-				// Left
-				if (firstTab || selected || onlyOne || !previousSelected) {
-					p->setPen(light);
-					p->drawLine(x1, y1 + 2, x1, y2 - ((onlyOne || firstTab) && selected && leftAligned ? 0 : borderThinkness));
-					p->drawPoint(x1 + 1, y1 + 1);
-				}
-				// Top
 				{
-					int beg = x1 + (previousSelected ? 0 : 2);
-					int end = x2 - (nextSelected ? 0 : 2);
-					p->setPen(light);
-					p->drawLine(beg, y1, end, y1);
+					if (!selected) {
+						y1 += 2;
+						x1 += onlyOne || firstTab ? borderThinkness : 0;
+						x2 -= onlyOne || lastTab ? borderThinkness : 0;
+					}
+
+					p->fillRect(QRect(x1 + 1, y1 + 1, (x2 - x1) - 1, (y2 - y1) - 2), tab->palette.background());
+
+					// Delete border
+					if (selected) {
+						p->fillRect(QRect(x1,y2-1,x2-x1,1), tab->palette.background());
+						p->fillRect(QRect(x1,y2,x2-x1,1), tab->palette.background());
+					}
+					// Left
+					if (firstTab || selected || onlyOne || !previousSelected) {
+						p->setPen(light);
+						p->drawLine(x1, y1 + 2, x1, y2 - ((onlyOne || firstTab) && selected && leftAligned ? 0 : borderThinkness));
+						p->drawPoint(x1 + 1, y1 + 1);
+					}
+					// Top
+					{
+						int beg = x1 + (previousSelected ? 0 : 2);
+						int end = x2 - (nextSelected ? 0 : 2);
+						p->setPen(light);
+						p->drawLine(beg, y1, end, y1);
+					}
+					// Right
+					if (lastTab || selected || onlyOne || !nextSelected) {
+						p->setPen(shadow);
+						p->drawLine(x2, y1 + 2, x2, y2 - ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness));
+						p->drawPoint(x2 - 1, y1 + 1);
+						p->setPen(dark);
+						p->drawLine(x2 - 1, y1 + 2, x2 - 1, y2 - ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness));
+					}
+					break;
 				}
-				// Right
-				if (lastTab || selected || onlyOne || !nextSelected) {
-					p->setPen(shadow);
-					p->drawLine(x2, y1 + 2, x2, y2 - ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness));
-					p->drawPoint(x2 - 1, y1 + 1);
-					p->setPen(dark);
-					p->drawLine(x2 - 1, y1 + 2, x2 - 1, y2 - ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness));
-				}
-				break;
-			}
 			case QTabBar::RoundedSouth:
-			{
-				if (!selected) {
-					y2 -= 2;
-					x1 += firstTab ? borderThinkness : 0;
-					x2 -= lastTab ? borderThinkness : 0;
-				}
-
-				p->fillRect(QRect(x1 + 1, y1 + 2, (x2 - x1) - 1, (y2 - y1) - 1), tab->palette.background());
-
-				// Delete border
-				if (selected) {
-					p->fillRect(QRect(x1, y1 + 1, (x2 - 1)-x1, 1), tab->palette.background());
-					p->fillRect(QRect(x1, y1, (x2 - 1)-x1, 1), tab->palette.background());
-				}
-				// Left
-				if (firstTab || selected || onlyOne || !previousSelected) {
-					p->setPen(light);
-					p->drawLine(x1, y2 - 2, x1, y1 + ((onlyOne || firstTab) && selected && leftAligned ? 0 : borderThinkness));
-					p->drawPoint(x1 + 1, y2 - 1);
-				}
-				// Bottom
 				{
-					int beg = x1 + (previousSelected ? 0 : 2);
-					int end = x2 - (nextSelected ? 0 : 2);
-					p->setPen(shadow);
-					p->drawLine(beg, y2, end, y2);
-					p->setPen(dark);
-					p->drawLine(beg, y2 - 1, end, y2 - 1);
+					if (!selected) {
+						y2 -= 2;
+						x1 += firstTab ? borderThinkness : 0;
+						x2 -= lastTab ? borderThinkness : 0;
+					}
+
+					p->fillRect(QRect(x1 + 1, y1 + 2, (x2 - x1) - 1, (y2 - y1) - 1), tab->palette.background());
+
+					// Delete border
+					if (selected) {
+						p->fillRect(QRect(x1, y1 + 1, (x2 - 1)-x1, 1), tab->palette.background());
+						p->fillRect(QRect(x1, y1, (x2 - 1)-x1, 1), tab->palette.background());
+					}
+					// Left
+					if (firstTab || selected || onlyOne || !previousSelected) {
+						p->setPen(light);
+						p->drawLine(x1, y2 - 2, x1, y1 + ((onlyOne || firstTab) && selected && leftAligned ? 0 : borderThinkness));
+						p->drawPoint(x1 + 1, y2 - 1);
+					}
+					// Bottom
+					{
+						int beg = x1 + (previousSelected ? 0 : 2);
+						int end = x2 - (nextSelected ? 0 : 2);
+						p->setPen(shadow);
+						p->drawLine(beg, y2, end, y2);
+						p->setPen(dark);
+						p->drawLine(beg, y2 - 1, end, y2 - 1);
+					}
+					// Right
+					if (lastTab || selected || onlyOne || !nextSelected) {
+						p->setPen(shadow);
+						p->drawLine(x2, y2 - 2, x2, y1 + ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness));
+						p->drawPoint(x2 - 1, y2 - 1);
+						p->setPen(dark);
+						p->drawLine(x2 - 1, y2 - 2, x2 - 1, y1 + ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness));
+					}
+					break;
 				}
-				// Right
-				if (lastTab || selected || onlyOne || !nextSelected) {
-					p->setPen(shadow);
-					p->drawLine(x2, y2 - 2, x2, y1 + ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness));
-					p->drawPoint(x2 - 1, y2 - 1);
-					p->setPen(dark);
-					p->drawLine(x2 - 1, y2 - 2, x2 - 1, y1 + ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness));
-				}
-				break;
-			}
 			case QTabBar::RoundedWest:
-			{
-				if (!selected) {
-					x1 += 2;
-					y1 += firstTab ? borderThinkness : 0;
-					y2 -= lastTab ? borderThinkness : 0;
-				}
-
-				p->fillRect(QRect(x1 + 1, y1 + 1, (x2 - x1) - 2, (y2 - y1) - 1), tab->palette.background());
-
-				// Delete border
-				if (selected) {
-					p->fillRect(QRect(x2 - 1, y1, 1, y2-y1), tab->palette.background());
-					p->fillRect(QRect(x2, y1, 1, y2-y1), tab->palette.background());
-				}
-				// Top
-				if (firstTab || selected || onlyOne || !previousSelected) {
-					p->setPen(light);
-					p->drawLine(x1 + 2, y1, x2 - ((onlyOne || firstTab) && selected && leftAligned ? 0 : borderThinkness), y1);
-					p->drawPoint(x1 + 1, y1 + 1);
-				}
-				// Left
 				{
-					int beg = y1 + (previousSelected ? 0 : 2);
-					int end = y2 - (nextSelected ? 0 : 2);
-					p->setPen(light);
-					p->drawLine(x1, beg, x1, end);
+					if (!selected) {
+						x1 += 2;
+						y1 += firstTab ? borderThinkness : 0;
+						y2 -= lastTab ? borderThinkness : 0;
+					}
+
+					p->fillRect(QRect(x1 + 1, y1 + 1, (x2 - x1) - 2, (y2 - y1) - 1), tab->palette.background());
+
+					// Delete border
+					if (selected) {
+						p->fillRect(QRect(x2 - 1, y1, 1, y2-y1), tab->palette.background());
+						p->fillRect(QRect(x2, y1, 1, y2-y1), tab->palette.background());
+					}
+					// Top
+					if (firstTab || selected || onlyOne || !previousSelected) {
+						p->setPen(light);
+						p->drawLine(x1 + 2, y1, x2 - ((onlyOne || firstTab) && selected && leftAligned ? 0 : borderThinkness), y1);
+						p->drawPoint(x1 + 1, y1 + 1);
+					}
+					// Left
+					{
+						int beg = y1 + (previousSelected ? 0 : 2);
+						int end = y2 - (nextSelected ? 0 : 2);
+						p->setPen(light);
+						p->drawLine(x1, beg, x1, end);
+					}
+					// Bottom
+					if (lastTab || selected || onlyOne || !nextSelected) {
+						p->setPen(shadow);
+						p->drawLine(x1 + 3, y2, x2 - ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness), y2);
+						p->drawPoint(x1 + 2, y2 - 1);
+						p->setPen(dark);
+						p->drawLine(x1 + 3, y2 - 1, x2 - ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness), y2 - 1);
+						p->drawPoint(x1 + 1, y2 - 1);
+						p->drawPoint(x1 + 2, y2);
+					}
+					break;
 				}
-				// Bottom
-				if (lastTab || selected || onlyOne || !nextSelected) {
-					p->setPen(shadow);
-					p->drawLine(x1 + 3, y2, x2 - ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness), y2);
-					p->drawPoint(x1 + 2, y2 - 1);
-					p->setPen(dark);
-					p->drawLine(x1 + 3, y2 - 1, x2 - ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness), y2 - 1);
-					p->drawPoint(x1 + 1, y2 - 1);
-					p->drawPoint(x1 + 2, y2);
-				}
-				break;
-			}
 			case QTabBar::RoundedEast:
-			{
-				if (!selected) {
-					x2 -= 2;
-					y1 += firstTab ? borderThinkness : 0;
-					y2 -= lastTab ? borderThinkness : 0;
-				}
-
-				p->fillRect(QRect(x1 + 2, y1 + 1, (x2 - x1) - 1, (y2 - y1) - 1), tab->palette.background());
-
-				// Delete border
-				if (selected) {
-					p->fillRect(QRect(x1 + 1, y1, 1, (y2 - 1)-y1),tab->palette.background());
-					p->fillRect(QRect(x1, y1, 1, (y2-1)-y1), tab->palette.background());
-				}
-				// Top
-				if (firstTab || selected || onlyOne || !previousSelected) {
-					p->setPen(light);
-					p->drawLine(x2 - 2, y1, x1 + ((onlyOne || firstTab) && selected && leftAligned ? 0 : borderThinkness), y1);
-					p->drawPoint(x2 - 1, y1 + 1);
-				}
-				// Right
 				{
-					int beg = y1 + (previousSelected ? 0 : 2);
-					int end = y2 - (nextSelected ? 0 : 2);
-					p->setPen(shadow);
-					p->drawLine(x2, beg, x2, end);
-					p->setPen(dark);
-					p->drawLine(x2 - 1, beg, x2 - 1, end);
+					if (!selected) {
+						x2 -= 2;
+						y1 += firstTab ? borderThinkness : 0;
+						y2 -= lastTab ? borderThinkness : 0;
+					}
+
+					p->fillRect(QRect(x1 + 2, y1 + 1, (x2 - x1) - 1, (y2 - y1) - 1), tab->palette.background());
+
+					// Delete border
+					if (selected) {
+						p->fillRect(QRect(x1 + 1, y1, 1, (y2 - 1)-y1),tab->palette.background());
+						p->fillRect(QRect(x1, y1, 1, (y2-1)-y1), tab->palette.background());
+					}
+					// Top
+					if (firstTab || selected || onlyOne || !previousSelected) {
+						p->setPen(light);
+						p->drawLine(x2 - 2, y1, x1 + ((onlyOne || firstTab) && selected && leftAligned ? 0 : borderThinkness), y1);
+						p->drawPoint(x2 - 1, y1 + 1);
+					}
+					// Right
+					{
+						int beg = y1 + (previousSelected ? 0 : 2);
+						int end = y2 - (nextSelected ? 0 : 2);
+						p->setPen(shadow);
+						p->drawLine(x2, beg, x2, end);
+						p->setPen(dark);
+						p->drawLine(x2 - 1, beg, x2 - 1, end);
+					}
+					// Bottom
+					if (lastTab || selected || onlyOne || !nextSelected) {
+						p->setPen(shadow);
+						p->drawLine(x2 - 2, y2, x1 + ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness), y2);
+						p->drawPoint(x2 - 1, y2 - 1);
+						p->setPen(dark);
+						p->drawLine(x2 - 2, y2 - 1, x1 + ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness), y2 - 1);
+					}
+					break;
 				}
-				// Bottom
-				if (lastTab || selected || onlyOne || !nextSelected) {
-					p->setPen(shadow);
-					p->drawLine(x2 - 2, y2, x1 + ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness), y2);
-					p->drawPoint(x2 - 1, y2 - 1);
-					p->setPen(dark);
-					p->drawLine(x2 - 2, y2 - 1, x1 + ((onlyOne || lastTab) && selected && rightAligned ? 0 : borderThinkness), y2 - 1);
-				}
-				break;
-			}
 			}
 		}
 		return;
