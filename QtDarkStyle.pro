@@ -24,17 +24,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         MainWindow.cpp \
-    NinePatch.cpp \
-    ImageWidget.cpp \
-    DarkStyle.cpp \
-    LegacyWindowsStyleTreeControl.cpp
+    src/NinePatch.cpp \
+    src/DarkStyle.cpp \
+    src/LegacyWindowsStyleTreeControl.cpp
 
 HEADERS += \
         MainWindow.h \
-    NinePatch.h \
-    ImageWidget.h \
-    DarkStyle.h \
-    LegacyWindowsStyleTreeControl.h
+    src/NinePatch.h \
+    src/DarkStyle.h \
+    src/LegacyWindowsStyleTreeControl.h
 
 FORMS += \
         MainWindow.ui
