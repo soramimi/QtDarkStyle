@@ -22,6 +22,21 @@ MainWindow::MainWindow(QWidget *parent) :
 //	ButtonImages buttons = generateImagesForButton(":/image/vsb/vsb_slider.png");
 
 //	ui->widget->setImage(buttons);
+
+	ui->listWidget->addItem("Hello, world");
+
+	QTreeWidgetItem *item = new QTreeWidgetItem(QStringList{"Foo"});
+	ui->treeWidget->addTopLevelItem(item);
+	item->addChild(new QTreeWidgetItem(QStringList{"Bar"}));
+	item->setExpanded(true);
+
+	ui->tableWidget->setColumnCount(2);
+	ui->tableWidget->setRowCount(2);
+	ui->tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("Hoge"));
+	ui->tableWidget->setItem(0, 0, new QTableWidgetItem("Hoge"));
+	ui->tableWidget->setItem(0, 1, new QTableWidgetItem("Fuga"));
+	ui->tableWidget->setItem(1, 0, new QTableWidgetItem("Piyo"));
+	ui->tableWidget->setItem(1, 1, new QTableWidgetItem("Pemo"));
 }
 
 MainWindow::~MainWindow()

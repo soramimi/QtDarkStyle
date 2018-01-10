@@ -26,13 +26,15 @@ SOURCES += \
         MainWindow.cpp \
     NinePatch.cpp \
     ImageWidget.cpp \
-    DarkStyle.cpp
+    DarkStyle.cpp \
+    LegacyWindowsStyleTreeControl.cpp
 
 HEADERS += \
         MainWindow.h \
     NinePatch.h \
     ImageWidget.h \
-    DarkStyle.h
+    DarkStyle.h \
+    LegacyWindowsStyleTreeControl.h
 
 FORMS += \
         MainWindow.ui
