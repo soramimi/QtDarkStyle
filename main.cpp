@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 #include <QApplication>
-#include "DarkStyle.h"
+#include "src/DarkStyle.h"
 
 int main(int argc, char *argv[])
 {

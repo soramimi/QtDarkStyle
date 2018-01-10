@@ -113,8 +113,6 @@ DarkStyle::DarkStyle()
 
 	progress_horz.load(QLatin1String(":/darktheme/progress/horz.png"));
 	progress_vert.load(QLatin1String(":/darktheme/progress/vert.png"));
-
-	selected_frame_color = QColor(128, 192, 255);
 }
 
 QString DarkStyle::pixmapkey(const QString &name, const QString &role, const QSize &size)
@@ -173,6 +171,18 @@ QPixmap DarkStyle::pixmapFromImage(const QImage &image, QSize size) const
 	return t.pm;
 }
 
+QColor DarkStyle::colorForSelectedFrame(const QStyleOption *opt) const
+{
+	(void)opt;
+	return QColor(128, 192, 255);
+
+}
+
+QColor DarkStyle::colorForItemView(QStyleOption const *opt) const
+{
+	return opt->palette.color(QPalette::Dark);
+}
+
 void DarkStyle::drawNinePatchImage(QPainter *p, const QImage &image, const QRect &r, int w, int h) const
 {
 	QImage im = createImageFromNinePatchImage(image, w, h);
@@ -209,10 +219,8 @@ void DarkStyle::drawGutter(QPainter *p, const QRect &r) const
 
 void DarkStyle::drawSelectedMenuFrame(const QStyleOption *option, QPainter *p, const QWidget *widget, bool deep) const
 {
-	QColor color = selected_frame_color;
-#if 0
-	drawPrimitive(PE_PanelButtonTool, option, p, widget); // TODO:
-#else
+	QColor color = colorForSelectedFrame(option);
+
 	int x = option->rect.x();
 	int y = option->rect.y();
 	int w = option->rect.width();
@@ -253,7 +261,6 @@ void DarkStyle::drawSelectedMenuFrame(const QStyleOption *option, QPainter *p, c
 	p->fillRect(x, y, w, h, br);
 
 	p->restore();
-#endif
 }
 
 void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
@@ -274,10 +281,7 @@ void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
 		p->save();
 		p->setRenderHint(QPainter::Antialiasing);
 		p->setClipPath(path);
-#if 0
-		p->setOpacity(0.125);
-		p->fillRect(option->rect, Qt::white);
-#else
+
 		int x = option->rect.x();
 		int y = option->rect.y();
 		int w = option->rect.width();
@@ -318,7 +322,7 @@ void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
 		gr.setColorAt(1, color1);
 		QBrush br(gr);
 		p->fillRect(x, y, w, h, br);
-#endif
+
 		p->restore();
 	}
 }
@@ -543,7 +547,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 		return;
 	}
 	if (pe == PE_PanelLineEdit) {
-		p->fillRect(option->rect, QColor(32, 32, 32));
+		p->fillRect(option->rect, colorForItemView(option));
 		drawFrame(p, option->rect, Qt::black, option->palette.color(QPalette::Light));
 		return;
 	}
@@ -570,7 +574,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 		return;
 	}
 	if (pe == PE_PanelItemViewItem) {
-		p->fillRect(option->rect, Qt::black);
+		p->fillRect(option->rect, colorForItemView(option));
 		if (qobject_cast<QTableView const *>(widget)) {
 			if (option->state & State_Selected) {
 				drawSelectedMenuFrame(option, p, widget, true);
@@ -590,6 +594,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 		return;
 	}
 	if (pe == QStyle::PE_IndicatorBranch) {
+		p->fillRect(option->rect, colorForItemView(option));
 		if (legacy_windows_.drawPrimitive(pe, option, p, widget)) {
 			return;
 		}

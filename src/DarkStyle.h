@@ -30,8 +30,6 @@ private:
 	QPixmap progress_horz;
 	QPixmap progress_vert;
 
-	QColor selected_frame_color;
-
 	LegacyWindowsStyleTreeControl legacy_windows_;
 
 	static const int TEXTURE_CACHE_SIZE = 100;
@@ -44,6 +42,10 @@ private:
 	static QString pixmapkey(QString const &name, QString const &role, QSize const &size);
 	static ButtonImages generateButtonImages(const QString &path);
 	QPixmap pixmapFromImage(QImage const &image, QSize size) const;
+
+	QColor colorForSelectedFrame(QStyleOption const *opt) const;
+	QColor colorForItemView(QStyleOption const *opt) const;
+
 	void drawNinePatchImage(QPainter *p, QImage const &image, QRect const &r, int w, int h) const;
 	void drawGutter(QPainter *p, QRect const &r) const;
 	void drawSelectedMenuFrame(const QStyleOption *option, QPainter *p, QWidget const *widget, bool deep) const;
