@@ -38,7 +38,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->tableWidget->setItem(1, 0, new QTableWidgetItem("Piyo"));
 	ui->tableWidget->setItem(1, 1, new QTableWidgetItem("Pemo"));
 
-	ui->comboBox->addItem("Hello, world");
 }
 
 MainWindow::~MainWindow()
