@@ -1,6 +1,8 @@
 #include "DarkStyle.h"
+#include <QApplication>
 #include <QComboBox>
 #include <QDebug>
+#include <QDockWidget>
 #include <QPixmapCache>
 #include <QStyleOptionComplex>
 #include <QTableWidget>
@@ -182,7 +184,7 @@ QColor DarkStyle::colorForSelectedFrame(const QStyleOption *opt) const
 QColor DarkStyle::colorForItemView(QStyleOption const *opt) const
 {
 	return opt->palette.color(QPalette::Dark);
-//	return opt->palette.color(QPalette::Base);
+//	return opt->palette.color(QPalette::Base); // これじゃない
 }
 
 void DarkStyle::drawNinePatchImage(QPainter *p, const QImage &image, const QRect &r, int w, int h) const
@@ -223,10 +225,11 @@ void DarkStyle::drawSelectedMenuFrame(const QStyleOption *option, QPainter *p, Q
 {
 	QColor color = colorForSelectedFrame(option);
 
-	int x = option->rect.x();
-	int y = option->rect.y();
-	int w = option->rect.width();
-	int h = option->rect.height();
+	int x, y, w, h;
+	x = rect.x();
+	y = rect.y();
+	w = rect.width();
+	h = rect.height();
 
 	auto SetAlpha = [&](QColor *color, int alpha){
 		if (deep) {
@@ -694,11 +697,29 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 #endif
 		return;
 	}
+	if (pe == PE_PanelItemViewRow) {
+#ifdef Q_OS_WIN
+		// thru
+#else
+		return;
+#endif
+	}
 	if (pe == PE_PanelItemViewItem) {
 //		p->fillRect(option->rect, colorForItemView(option)); // 選択枠を透過描画させるので背景は描かない
 		if (qobject_cast<QTableView const *>(widget)) {
 			if (option->state & State_Selected) {
+#ifdef Q_OS_WIN
 				drawSelectedMenuFrame(option, p, option->rect, widget, true);
+#else
+				if (option->state & State_Selected) {
+					p->save();
+					p->setClipRect(option->rect);
+					QRect r = widget->rect();
+					r = QRect(r.x(), option->rect.y(), r.width(), option->rect.height());
+					drawSelectedMenuFrame(option, p, r, widget, false);
+					p->restore();
+				}
+#endif
 			}
 		} else {
 			int n = 0;
@@ -1304,6 +1325,75 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 		}
 		return;
 	}
+#ifdef Q_OS_MAC
+	if (ce == CE_DockWidgetTitle) {
+		if (const QStyleOptionDockWidget *dwOpt = qstyleoption_cast<const QStyleOptionDockWidget *>(option)) {
+			const QDockWidget *dockWidget = qobject_cast<const QDockWidget *>(widget);
+			QRect rect = option->rect;
+			if (dockWidget && dockWidget->isFloating()) {
+				QProxyStyle::drawControl(ce, option, p, widget);
+				return;
+			}
+
+			const QStyleOptionDockWidgetV2 *v2 = qstyleoption_cast<const QStyleOptionDockWidgetV2*>(dwOpt);
+			bool verticalTitleBar = v2 == 0 ? false : v2->verticalTitleBar;
+
+			if (verticalTitleBar) {
+				rect.setSize(rect.size().transposed());
+
+				p->translate(rect.left() - 1, rect.top() + rect.width());
+				p->rotate(-90);
+				p->translate(-rect.left() + 1, -rect.top());
+			}
+
+			p->setBrush(option->palette.background().color().darker(110));
+			p->setPen(option->palette.background().color().darker(130));
+			p->drawRect(rect.adjusted(0, 1, -1, -3));
+
+			int buttonMargin = 4;
+			int mw = proxy()->pixelMetric(QStyle::PM_DockWidgetTitleMargin, dwOpt, widget);
+			int fw = proxy()->pixelMetric(PM_DockWidgetFrameWidth, dwOpt, widget);
+			const QDockWidget *dw = qobject_cast<const QDockWidget *>(widget);
+			bool isFloating = dw != 0 && dw->isFloating();
+
+			QRect r = option->rect.adjusted(0, 2, -1, -3);
+			QRect titleRect = r;
+
+			if (dwOpt->closable) {
+				QSize sz = proxy()->standardIcon(QStyle::SP_TitleBarCloseButton, dwOpt, widget).actualSize(QSize(10, 10));
+				titleRect.adjust(0, 0, -sz.width() - mw - buttonMargin, 0);
+			}
+
+			if (dwOpt->floatable) {
+				QSize sz = proxy()->standardIcon(QStyle::SP_TitleBarMaxButton, dwOpt, widget).actualSize(QSize(10, 10));
+				titleRect.adjust(0, 0, -sz.width() - mw - buttonMargin, 0);
+			}
+
+			if (isFloating) {
+				titleRect.adjust(0, -fw, 0, 0);
+				if (widget != 0 && widget->windowIcon().cacheKey() != QApplication::windowIcon().cacheKey())
+					titleRect.adjust(titleRect.height() + mw, 0, 0, 0);
+			} else {
+				titleRect.adjust(mw, 0, 0, 0);
+				if (!dwOpt->floatable && !dwOpt->closable)
+					titleRect.adjust(0, 0, -mw, 0);
+			}
+			if (!verticalTitleBar)
+				titleRect = visualRect(dwOpt->direction, r, titleRect);
+
+			if (!dwOpt->title.isEmpty()) {
+				QString titleText = p->fontMetrics().elidedText(dwOpt->title, Qt::ElideRight, verticalTitleBar ? titleRect.height() : titleRect.width());
+				const int indent = 4;
+				int align = Qt::AlignRight | Qt::AlignVCenter;
+				drawItemText(p, rect.adjusted(indent + 1, 1, -indent - 1, -1),
+							 align, dwOpt->palette,
+							 dwOpt->state & State_Enabled, titleText,
+							 QPalette::WindowText);
+			}
+		}
+		return;
+	}
+#endif // Q_OS_MAC
 //	qDebug() << ce;
 	QProxyStyle::drawControl(ce, option, p, widget);
 }
@@ -1479,10 +1569,12 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 			int w, h;
 			if (ishorz) {
 				h = extent;
-				w = h * r.width() / r.height();
+				int d = r.height();
+				w = (d == 0) ? 0 : (h * r.width() / d);
 			} else {
 				w = extent;
-				h = w * r.height() / r.width();
+				int d = r.width();
+				h = (d == 0) ? 0 : (w * r.height() / d);
 			}
 			drawNinePatchImage(p, image, r, w, h);
 		};
@@ -1531,10 +1623,12 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 			int w, h;
 			if (ishorz) {
 				h = extent;
-				w = h * r.width() / r.height();
+				int d = r.height();
+				w = (d == 0) ? 0 : (h * r.width() / d);
 			} else {
 				w = extent;
-				h = w * r.height() / r.width();
+				int d = r.width();
+				h = (d == 0) ? 0 : (w * r.height() / d);
 			}
 #ifdef Q_OS_MAC // macだとズレて見えるので調整する
 			if (ishorz) {
