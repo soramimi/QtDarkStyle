@@ -2,7 +2,10 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QDebug>
+#include <QDialogButtonBox>
 #include <QDockWidget>
+#include <QInputDialog>
+#include <QMessageBox>
 #include <QPixmapCache>
 #include <QStyleOptionComplex>
 #include <QTableWidget>
@@ -223,6 +226,7 @@ void DarkStyle::drawGutter(QPainter *p, const QRect &r) const
 
 void DarkStyle::drawSelectedMenuFrame(const QStyleOption *option, QPainter *p, QRect rect, const QWidget *widget, bool deep) const
 {
+	(void)widget;
 	QColor color = colorForSelectedFrame(option);
 
 	int x, y, w, h;
@@ -708,27 +712,21 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 //		p->fillRect(option->rect, colorForItemView(option)); // 選択枠を透過描画させるので背景は描かない
 		if (qobject_cast<QTableView const *>(widget)) {
 			if (option->state & State_Selected) {
-#ifdef Q_OS_WIN
-				drawSelectedMenuFrame(option, p, option->rect, widget, true);
-#else
-				if (option->state & State_Selected) {
-					p->save();
-					p->setClipRect(option->rect);
-					QRect r = widget->rect();
-					r = QRect(r.x(), option->rect.y(), r.width(), option->rect.height());
-					drawSelectedMenuFrame(option, p, r, widget, false);
-					p->restore();
-				}
-#endif
+				p->save();
+				p->setClipRect(option->rect);
+				QRect r = widget->rect();
+				r = QRect(r.x(), option->rect.y(), r.width(), option->rect.height());
+				drawSelectedMenuFrame(option, p, r, widget, false);
+				p->restore();
 			}
 		} else {
 			int n = 0;
 			if (option->state & State_Selected) {
 				n++;
 			}
-			if (option->state & State_MouseOver) {
-				n++;
-			}
+//			if (option->state & State_MouseOver) {
+//				n++;
+//			}
 			if (n > 0) {
 				drawSelectedMenuFrame(option, p, option->rect, widget, n > 1);
 			}
@@ -742,6 +740,26 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 		if (legacy_windows_.drawPrimitive(pe, option, p, widget)) {
 			return;
 		}
+	}
+	if (pe == QStyle::PE_Widget) { // bg for messagebox
+		const QDialogButtonBox *buttonBox = 0;
+
+		if (qobject_cast<const QMessageBox *> (widget))
+			buttonBox = widget->findChild<const QDialogButtonBox *>(QLatin1String("qt_msgbox_buttonbox"));
+#ifndef QT_NO_INPUTDIALOG
+		else if (qobject_cast<const QInputDialog *> (widget))
+			buttonBox = widget->findChild<const QDialogButtonBox *>(QLatin1String("qt_inputdlg_buttonbox"));
+#endif // QT_NO_INPUTDIALOG
+
+		if (buttonBox) {
+			int y = buttonBox->geometry().top();
+			QRect r(option->rect.x(), y, option->rect.width(), 1);
+			p->fillRect(r, option->palette.color(QPalette::Light));
+			r.translate(0, -1);
+			p->fillRect(r, option->palette.color(QPalette::Dark));
+		}
+
+		return;
 	}
 //	qDebug() << pe;
 	QProxyStyle::drawPrimitive(pe, option, p, widget);
@@ -1405,7 +1423,7 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 			SubControls sub = option->subControls;
 			if (cmb->editable) {
 				int partId = 0;
-				int stateId = 0;
+//				int stateId = 0;
 #define EP_EDITBORDER_NOSCROLL      6
 #define EP_EDITBORDER_HVSCROLL      9
 				State flags = option->state;
