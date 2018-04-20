@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 #include <QApplication>
-#include "src/DarkStyle.h"
+#include "DarkStyle.h"
 
 class MyStyle : public QProxyStyle {
 public:
