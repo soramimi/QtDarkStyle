@@ -1,7 +1,7 @@
 #ifndef DARKSTYLEPLUGIN_H
 #define DARKSTYLEPLUGIN_H
 
-#include "../../DarkStyleInterface.h"
+#include "../DarkStyleInterface.h"
 
 #include <QObject>
 

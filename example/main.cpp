@@ -2,7 +2,7 @@
 #include <QApplication>
 #include <QPluginLoader>
 //#include "DarkStyle.h"
-#include <DarkStyleInterface.h>
+#include "../DarkStyleInterface.h"
 
 //class MyStyle : public QProxyStyle {
 //public:

@@ -19,16 +19,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 INCLUDEPATH += $$PWD
 INCLUDEPATH += $$PWD/src
 
+LIBS += -L$$PWD/_out/ -ldarkscrollbarplugin
 
 SOURCES += \
-        main.cpp \
-		MainWindow.cpp
+        example/main.cpp \
+        example/MainWindow.cpp
 
 HEADERS += \
-		MainWindow.h
+        example/MainWindow.h
 
 FORMS += \
-        MainWindow.ui
+        example/MainWindow.ui
 
 RESOURCES += \
     resources.qrc
