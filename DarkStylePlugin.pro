@@ -1,7 +1,7 @@
 
 QT       += core gui widgets
 
-TARGET = darkscrollbarplugin
+TARGET = darkstyleplugin
 TEMPLATE = lib
 CONFIG += plugin
 CONFIG += c++11
