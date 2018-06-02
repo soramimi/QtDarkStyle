@@ -19,7 +19,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 INCLUDEPATH += $$PWD
 INCLUDEPATH += $$PWD/src
 
-LIBS += -L$$PWD/_out/ -ldarkscrollbarplugin
+LIBS += -L$$PWD/_out/ -ldarkstyleplugin
 
 SOURCES += \
         example/main.cpp \

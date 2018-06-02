@@ -15,15 +15,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     plugin/NinePatch.cpp \
     plugin/DarkStyle.cpp \
-    plugin/LegacyWindowsStyleTreeControl.cpp \
-    plugin/DarkStylePlugin.cpp
+    plugin/DarkStylePlugin.cpp \
+    plugin/StandardStyle.cpp \
+    plugin/TraditionalWindowsStyleTreeControl.cpp
 
 HEADERS += \
     ../DarkStyleInterface.h \
     plugin/NinePatch.h \
     plugin/DarkStyle.h \
-    plugin/LegacyWindowsStyleTreeControl.h \
-    plugin/DarkStylePlugin.h
+    plugin/DarkStylePlugin.h \
+    plugin/StandardStyle.h \
+    plugin/TraditionalWindowsStyleTreeControl.h
 
 FORMS +=
 

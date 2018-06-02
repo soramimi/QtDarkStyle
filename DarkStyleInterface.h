@@ -10,8 +10,8 @@ public:
 	virtual ~DarkStyleInterface()
 	{
 	}
-	virtual QStyle *create() = 0;
-
+	virtual QStyle *createStandardStyle() = 0;
+	virtual QStyle *createDarkStyle() = 0;
 };
 
 Q_DECLARE_INTERFACE(DarkStyleInterface, "jp.soramimi.DarkStylePlugin/1.0")

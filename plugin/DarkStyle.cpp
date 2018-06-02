@@ -1,6 +1,6 @@
 #include "DarkStyle.h"
 #include "NinePatch.h"
-#include "LegacyWindowsStyleTreeControl.h"
+#include "TraditionalWindowsStyleTreeControl.h"
 #include <QApplication>
 #include <QComboBox>
 #include <QDebug>
@@ -195,7 +195,7 @@ struct DarkStyle::Private {
     QPixmap progress_horz;
     QPixmap progress_vert;
 
-    LegacyWindowsStyleTreeControl legacy_windows;
+	TraditionalWindowsStyleTreeControl legacy_windows;
 
 };
 
@@ -230,8 +230,6 @@ void DarkStyle::setScrollBarExtent(int n)
 {
     m->scroll_bar_extent = n;
 }
-
-
 
 
 
