@@ -2099,7 +2099,7 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 				// draw handle
 				if ((option->subControls & SC_SliderHandle) ) {
 					QRect pixmapRect(0, 0, handle.width(), handle.height());
-					QRect r = pixmapRect;
+					QRect r = pixmapRect.adjusted(0, 0, -1, -1);
 					QPainterPath path;
 					path.addEllipse(r);
 					QString handlePixmapName = pixmapkey(QLatin1String("slider_handle"), "", handle.size());
