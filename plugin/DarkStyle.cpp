@@ -1148,6 +1148,21 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			}
 
 			if (checked) {
+				const qreal boxMargin = 3.5;
+				const qreal boxWidth = checkcol - 2 * boxMargin;
+				const int checkColHOffset = windowsItemHMargin + windowsItemFrame - 1;
+				QRectF checkRectF(option->rect.left() + boxMargin + checkColHOffset, option->rect.center().y() - boxWidth/2 + 1, boxWidth, boxWidth);
+				QRect checkRect = checkRectF.toRect();
+				checkRect.setWidth(checkRect.height()); // avoid .toRect() round error results in non-perfect square
+				checkRect = visualRect(opt->direction, opt->rect, checkRect);
+
+				QStyleOptionButton box;
+				box.QStyleOption::operator=(*option);
+				box.rect = checkRect;
+				if (checked) {
+					box.state |= State_On;
+				}
+				drawPrimitive(PE_IndicatorCheckBox, &box, p, widget);
 			}
 
 			if (!ignoreCheckMark) {

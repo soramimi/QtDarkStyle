@@ -41,6 +41,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->comboBox->addItem("Hoge");
 	ui->comboBox->addItem("Fuga");
 	ui->comboBox->addItem("Piyo");
+
+    ui->action_fuga->setCheckable(true);
+    ui->action_fuga->setChecked(true);
 }
 
 MainWindow::~MainWindow()

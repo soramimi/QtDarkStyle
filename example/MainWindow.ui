@@ -416,7 +416,7 @@
      <x>0</x>
      <y>0</y>
      <width>765</width>
-     <height>24</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -441,8 +441,15 @@
     <addaction name="action_Copy"/>
     <addaction name="action_Paste"/>
    </widget>
+   <widget class="QMenu" name="menuHoge">
+    <property name="title">
+     <string>Hoge</string>
+    </property>
+    <addaction name="action_fuga"/>
+   </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Edit"/>
+   <addaction name="menuHoge"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -502,6 +509,11 @@
   <action name="action_Paste">
    <property name="text">
     <string>&amp;Paste</string>
+   </property>
+  </action>
+  <action name="action_fuga">
+   <property name="text">
+    <string>Fuga</string>
    </property>
   </action>
  </widget>
