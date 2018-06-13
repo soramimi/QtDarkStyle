@@ -46,15 +46,6 @@ public:
 	}
 };
 
-QImage loadImage(QString const &path, QString const &role = QString())
-{
-	QImage image;
-	image.load(path);
-	image.setText("name", path);
-	image.setText("role", role);
-	return image;
-}
-
 QImage generateHoverImage(QImage const &source)
 {
 	QImage newimage;
@@ -99,64 +90,16 @@ void drawFrame(QPainter *pr, QRect const &r, QColor color_topleft, QColor color_
 	return drawFrame(pr, r.x(), r.y(), r.width(), r.height(), color_topleft, color_bottomright);
 }
 
-class ButtonImages {
-public:
-    QImage im_normal;
-    QImage im_hover;
-};
-
-struct ScrollBarTextures {
-    QImage page_bg;
-    ButtonImages sub_line;
-    ButtonImages add_line;
-    ButtonImages slider;
-};
-
 struct TextureCacheItem {
     QString key;
     QPixmap pm;
 };
 
-QString pixmapkey(QString const &name, QString const &role, QSize const &size)
+QString pixmapkey(QString const &name, QString const &role, QSize const &size, QColor const &color)
 {
-    QString key = "%1:%2:%3:%4";
-    key = key.arg(name).arg(role).arg(size.width()).arg(size.height());
+	QString key = "%1:%2:%3:%4:%5";
+	key = key.arg(name).arg(role).arg(size.width()).arg(size.height()).arg(QString().sprintf("%02X%02X%02X", color.red(), color.green(), color.blue()));
     return key;
-}
-
-ButtonImages generateButtonImages(const QString &path)
-{
-    QImage source = loadImage(path);
-    ButtonImages buttons;
-    int w = source.width();
-    int h = source.height();
-    if (w > 4 && h > 4) {
-        Lighten lighten;
-        buttons.im_normal = source;
-        buttons.im_hover = source;
-        w -= 4;
-        h -= 4;
-        for (int y = 0; y < h; y++) {
-            QRgb *src1 = (QRgb *)source.scanLine(y + 1);
-            QRgb *src2 = (QRgb *)source.scanLine(y + 2);
-            QRgb *src3 = (QRgb *)source.scanLine(y + 3);
-            QRgb *dst0 = (QRgb *)buttons.im_normal.scanLine(y + 2) + 2;
-            QRgb *dst1 = (QRgb *)buttons.im_hover.scanLine(y + 2) + 2;
-            for (int x = 0; x < w; x++) {
-                int v = (int)qAlpha(src3[x + 3]) - (int)qAlpha(src1[x + 1]);
-                v = (v + 256) / 2;
-                int alpha = qAlpha(src2[x + 2]);
-                dst0[x] = qRgba(v, v, v, alpha);
-                v = lighten[v];
-                dst1[x] = qRgba(v, v, v, alpha);
-            }
-        }
-        buttons.im_normal.setText("name", source.text("name"));
-        buttons.im_hover.setText("name", source.text("name"));
-        buttons.im_normal.setText("role", "normal");
-        buttons.im_hover.setText("role", "hover");
-    }
-    return buttons;
 }
 
 void drawRaisedFrame(QPainter *p, const QRect &rect, const QPalette &palette)
@@ -177,6 +120,15 @@ void drawRaisedFrame(QPainter *p, const QRect &rect, const QPalette &palette)
     p->restore();
 }
 
+QImage loadImage(QString const &path, QString const &role = QString())
+{
+	QImage image(path);
+	image.setText("name", path);
+	image.setText("role", role);
+	return image;
+}
+
+
 } // namespace
 
 // DarkStyle
@@ -184,6 +136,8 @@ void drawRaisedFrame(QPainter *p, const QRect &rect, const QPalette &palette)
 static const int TEXTURE_CACHE_SIZE = 100;
 
 struct DarkStyle::Private {
+	QColor base_color;
+
     ScrollBarTextures hsb;
     ScrollBarTextures vsb;
 
@@ -192,8 +146,8 @@ struct DarkStyle::Private {
     QImage button_normal;
     QImage button_press;
 
-    QPixmap progress_horz;
-    QPixmap progress_vert;
+	QImage progress_horz;
+	QImage progress_vert;
 
 	TraditionalWindowsStyleTreeControl legacy_windows;
 
@@ -202,23 +156,8 @@ struct DarkStyle::Private {
 DarkStyle::DarkStyle()
     : m(new Private)
 {
-    m->button_normal = loadImage(QLatin1String(":/darktheme/button/button_normal.png"), QLatin1String("normal"));
-    m->button_press = loadImage(QLatin1String(":/darktheme/button/button_press.png"), QLatin1String("press"));
-
-    m->hsb.sub_line = generateButtonImages(QLatin1String(":/darktheme/hsb/hsb_sub_line.png"));
-    m->hsb.add_line = generateButtonImages(QLatin1String(":/darktheme/hsb/hsb_add_line.png"));
-    m->hsb.page_bg = loadImage(QLatin1String(":/darktheme/hsb/hsb_page_bg.png"));
-    m->hsb.slider.im_normal = loadImage(QLatin1String(":/darktheme/hsb/hsb_slider.png"));
-    m->hsb.slider.im_hover = generateHoverImage(m->hsb.slider.im_normal);
-
-    m->vsb.sub_line = generateButtonImages(QLatin1String(":/darktheme/vsb/vsb_sub_line.png"));
-    m->vsb.add_line = generateButtonImages(QLatin1String(":/darktheme/vsb/vsb_add_line.png"));
-    m->vsb.page_bg = loadImage(QLatin1String(":/darktheme/vsb/vsb_page_bg.png"));
-    m->vsb.slider.im_normal = loadImage(QLatin1String(":/darktheme/vsb/vsb_slider.png"));
-    m->vsb.slider.im_hover = generateHoverImage(m->vsb.slider.im_normal);
-
-    m->progress_horz.load(QLatin1String(":/darktheme/progress/horz.png"));
-    m->progress_vert.load(QLatin1String(":/darktheme/progress/vert.png"));
+	setBaseColor(Qt::white);
+//	setBaseColor(QColor(128, 255, 240));
 }
 
 DarkStyle::~DarkStyle()
@@ -226,16 +165,118 @@ DarkStyle::~DarkStyle()
     delete m;
 }
 
+void DarkStyle::setBaseColor(QColor color)
+{
+	m->base_color = color;
+	loadImages();
+}
+
+QColor DarkStyle::color(int level, int alpha) const
+{
+	QColor c = m->base_color.lighter(level * 100 / 255);
+	c.setAlpha(alpha);
+	return c;
+}
+
 void DarkStyle::setScrollBarExtent(int n)
 {
     m->scroll_bar_extent = n;
 }
 
+QImage DarkStyle::colorizeImage(QImage image)
+{
+	int w = image.width();
+	int h = image.height();
+	if (w > 0 && h > 0) {
+		QRgb lut[256];
+		for (int i = 0; i < 256; i++) {
+			QColor c = color(i);
+			lut[i] = qRgb(c.red(), c.green(), c.blue());
+		}
+		image = image.convertToFormat(QImage::Format_RGBA8888);
+		for (int y = 0; y < h; y++) {
+			QRgb *p = (QRgb *)image.scanLine(y);
+			for (int x = 0; x < w; x++) {
+				int a = qAlpha(p[x]);
+				QColor c(p[x]);
+				int r = c.red();
+				int g = c.green();
+				int b = c.blue();
+				p[x] = qRgba(r, g, b, a);
+			}
+		}
+	}
+	return image;
+}
 
+QImage DarkStyle::loadColorizedImage(QString const &path, const QString &role)
+{
+	QImage image = loadImage(path);
+	image = colorizeImage(image);
+	image.setText("name", path);
+	image.setText("role", role);
+	return image;
+}
+
+DarkStyle::ButtonImages DarkStyle::generateButtonImages(const QString &path)
+{
+	QImage source = loadColorizedImage(path);
+	ButtonImages buttons;
+	int w = source.width();
+	int h = source.height();
+	if (w > 4 && h > 4) {
+		Lighten lighten;
+		buttons.im_normal = source;
+		buttons.im_hover = source;
+		w -= 4;
+		h -= 4;
+		for (int y = 0; y < h; y++) {
+			QRgb *src1 = (QRgb *)source.scanLine(y + 1);
+			QRgb *src2 = (QRgb *)source.scanLine(y + 2);
+			QRgb *src3 = (QRgb *)source.scanLine(y + 3);
+			QRgb *dst0 = (QRgb *)buttons.im_normal.scanLine(y + 2) + 2;
+			QRgb *dst1 = (QRgb *)buttons.im_hover.scanLine(y + 2) + 2;
+			for (int x = 0; x < w; x++) {
+				int v = (int)qAlpha(src3[x + 3]) - (int)qAlpha(src1[x + 1]);
+				v = (v + 256) / 2;
+				int alpha = qAlpha(src2[x + 2]);
+				dst0[x] = qRgba(v, v, v, alpha);
+				v = lighten[v];
+				dst1[x] = qRgba(v, v, v, alpha);
+			}
+		}
+		buttons.im_normal.setText("name", source.text("name"));
+		buttons.im_hover.setText("name", source.text("name"));
+		buttons.im_normal.setText("role", "normal");
+		buttons.im_hover.setText("role", "hover");
+	}
+	return buttons;
+}
+
+void DarkStyle::loadImages()
+{
+	m->button_normal        = loadColorizedImage(QLatin1String(":/darktheme/button/button_normal.png"), QLatin1String("normal"));
+	m->button_press         = loadColorizedImage(QLatin1String(":/darktheme/button/button_press.png"), QLatin1String("press"));
+
+	m->hsb.sub_line         = generateButtonImages(QLatin1String(":/darktheme/hsb/hsb_sub_line.png"));
+	m->hsb.add_line         = generateButtonImages(QLatin1String(":/darktheme/hsb/hsb_add_line.png"));
+	m->hsb.page_bg          = loadColorizedImage(QLatin1String(":/darktheme/hsb/hsb_page_bg.png"));
+	m->hsb.slider.im_normal = loadColorizedImage(QLatin1String(":/darktheme/hsb/hsb_slider.png"));
+	m->hsb.slider.im_hover  = generateHoverImage(m->hsb.slider.im_normal);
+
+	m->vsb.sub_line         = generateButtonImages(QLatin1String(":/darktheme/vsb/vsb_sub_line.png"));
+	m->vsb.add_line         = generateButtonImages(QLatin1String(":/darktheme/vsb/vsb_add_line.png"));
+	m->vsb.page_bg          = loadColorizedImage(QLatin1String(":/darktheme/vsb/vsb_page_bg.png"));
+	m->vsb.slider.im_normal = loadColorizedImage(QLatin1String(":/darktheme/vsb/vsb_slider.png"));
+	m->vsb.slider.im_hover  = generateHoverImage(m->vsb.slider.im_normal);
+
+	m->progress_horz = loadImage(QLatin1String(":/darktheme/progress/horz.png"));
+	m->progress_vert = loadImage(QLatin1String(":/darktheme/progress/vert.png"));
+}
 
 QPixmap DarkStyle::pixmapFromImage(const QImage &image, QSize size) const
 {
-	QString key = pixmapkey(image.text("name"), image.text("role"), size);
+	QString key = pixmapkey(image.text("name"), image.text("role"), size, m->base_color);
 
 	QPixmap *pm = QPixmapCache::find(key);
 	if (pm) return *pm;
@@ -271,7 +312,7 @@ void DarkStyle::drawNinePatchImage(QPainter *p, const QImage &image, const QRect
 
 void DarkStyle::polish(QPalette &palette)
 {
-	palette = QPalette(QColor(64, 64, 64));
+	palette = QPalette(color(64));
 }
 
 void DarkStyle::drawGutter(QPainter *p, const QRect &r) const
@@ -280,8 +321,8 @@ void DarkStyle::drawGutter(QPainter *p, const QRect &r) const
 	int y = r.y();
 	int w = r.width();
 	int h = r.height();
-	QColor dark = QColor(32, 32, 32);
-	QColor lite = QColor(128, 128, 128);
+	QColor dark = color(32);
+	QColor lite = color(128);
 	if (w < h) {
 		x += (w - 1) / 2;
 		p->fillRect(x, y, 1, h, dark);
@@ -436,22 +477,22 @@ void DarkStyle::drawToolButton(QPainter *p, const QStyleOption *option) const
 	QColor color0, color1;
 #ifdef Q_OS_MAC
 	if (pressed) {
-		color0 = QColor(72, 72, 72);
-		color1 = QColor(40, 40, 40);
+		color0 = color(72);
+		color1 = color(40);
 	} else {
-		color0 = QColor(80, 80, 80);
-		color1 = QColor(48, 48, 48);
+		color0 = color(80);
+		color1 = color(48);
 	}
 #else
 	if (pressed) {
-		color0 = QColor(80, 80, 80);
-		color1 = QColor(48, 48, 48);
+		color0 = color(80);
+		color1 = color(48);
 	} else if (hover) {
-		color0 = QColor(96, 96, 96);
-		color1 = QColor(64, 64, 64);
+		color0 = color(96);
+		color1 = color(64);
 	} else {
-		color0 = QColor(80, 80, 80);
-		color1 = QColor(48, 48, 48);
+		color0 = color(80);
+		color1 = color(48);
 	}
 #endif
 	QLinearGradient gr(QPointF(x, y), QPointF(x, y + h));
@@ -461,9 +502,9 @@ void DarkStyle::drawToolButton(QPainter *p, const QStyleOption *option) const
 	p->fillRect(x, y, w, h, br);
 
 	if (option->state & State_Raised) {
-		drawFrame(p, option->rect, QColor(96, 96, 96), QColor(32, 32, 32));
+		drawFrame(p, option->rect, color(96), color(32));
 	} else if (option->state & State_Sunken) {
-		drawFrame(p, option->rect, QColor(48, 48, 48), QColor(48, 48, 48));
+		drawFrame(p, option->rect, color(48), color(48));
 	}
 
 	p->restore();
@@ -707,9 +748,9 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 		QRect r = option->rect;
 		drawFrame(p, r, Qt::black, Qt::black);
 		r = r.adjusted(1, 1, -1, -1);
-		drawFrame(p, r, QColor(128, 128, 128), QColor(64, 64, 64));
+		drawFrame(p, r, color(128), color(64));
 		r = r.adjusted(1, 1, -1, -1);
-		p->fillRect(r, QColor(80, 80, 80));
+		p->fillRect(r, color(80));
 		return;
 	}
 	if (pe == PE_FrameMenu) {
@@ -859,7 +900,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 		int y = option->rect.y();
 		int w = option->rect.width();
 		int h = option->rect.height();
-		p->fillRect(x, y + h - 1, w, 1, QColor(32, 32, 32));
+		p->fillRect(x, y + h - 1, w, 1, color(32));
 		return;
 	}
 //  if (ce == CE_ToolButtonLabel) {
@@ -1545,13 +1586,13 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 
 			QColor color(0, 128, 255);
 
-            QPixmap const *pixmap = &m->progress_horz;
+			QImage const *image = &m->progress_horz;
 
 			QString key = "horz";
 
 			bool horz = true;
 			if (bar->orientation == Qt::Vertical) {
-                pixmap = &m->progress_vert;
+				image = &m->progress_vert;
 				key = "vert";
 				horz = false;
 			}
@@ -1585,9 +1626,10 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			}
 			QPixmap pm;
 			QSize size(w, h);
-			key = pixmapkey("progress_bar", key, size);
+			key = pixmapkey("progress_bar", key, size, m->base_color);
 			if (!QPixmapCache::find(key, &pm)) {
-				pm = pixmap->scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+				QImage im = image->scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+				pm = QPixmap::fromImage(im);
 				QPixmapCache::insert(key, pm);
 			}
 			p->setOpacity(0.5);
@@ -1878,7 +1920,7 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 			drawNinePatchImage(p, image, r, w, h);
 		};
 
-		p->fillRect(option->rect, QColor(64, 64, 64));
+		p->fillRect(option->rect, color(64));
 		p->setRenderHint(QPainter::Antialiasing);
 
 		{
@@ -2023,7 +2065,7 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 
 				if ((option->subControls & SC_SliderGroove) && groove.isValid()) {
 					QRect rect(0, 0, groove.width(), groove.height());
-					QString key = pixmapkey("slider_groove", horizontal ? "horz" : "vert", rect.size());
+					QString key = pixmapkey("slider_groove", horizontal ? "horz" : "vert", rect.size(), m->base_color);
 
 					QRectF grooveRect;
 					double r = std::min(groove.width(), groove.height()) / 2;
@@ -2117,7 +2159,7 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 					QRect r = pixmapRect.adjusted(0, 0, -1, -1);
 					QPainterPath path;
 					path.addEllipse(r);
-					QString handlePixmapName = pixmapkey(QLatin1String("slider_handle"), "", handle.size());
+					QString handlePixmapName = pixmapkey(QLatin1String("slider_handle"), "", handle.size(), m->base_color);
 					if (!QPixmapCache::find(handlePixmapName, cache)) {
 						cache = QPixmap(handle.size());
 						cache.fill(Qt::transparent);

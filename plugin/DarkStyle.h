@@ -10,7 +10,25 @@ private:
 	struct Private;
 	Private *m;
 
+	class ButtonImages {
+	public:
+		QImage im_normal;
+		QImage im_hover;
+	};
+
+	struct ScrollBarTextures {
+		QImage page_bg;
+		ButtonImages sub_line;
+		ButtonImages add_line;
+		ButtonImages slider;
+	};
+
+//	QImage loadImage(const QString &path, const QString &role = QString());
+	QImage colorizeImage(QImage image);
+	QImage loadColorizedImage(const QString &path, const QString &role = QString());
+	ButtonImages generateButtonImages(const QString &path);
 	QPixmap pixmapFromImage(QImage const &image, QSize size) const;
+	void loadImages();
 
 	QColor colorForSelectedFrame(QStyleOption const *opt) const;
 	QColor colorForItemView(QStyleOption const *opt) const;
@@ -21,10 +39,12 @@ private:
 	void drawButton(QPainter *p, QStyleOption const *option) const;
 	void drawToolButton(QPainter *p, QStyleOption const *option) const;
 	void drawMenuBarBG(QPainter *p, const QStyleOption *option, const QWidget *widget) const;
+	QColor color(int level, int alpha = 255) const;
 public:
 	DarkStyle();
 	~DarkStyle();
 
+	void setBaseColor(QColor color);
 	void setScrollBarExtent(int n);
 
 	void polish(QPalette &palette);
