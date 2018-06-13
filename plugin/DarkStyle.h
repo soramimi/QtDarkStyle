@@ -27,6 +27,7 @@ private:
 	QImage colorizeImage(QImage image);
 	QImage loadColorizedImage(const QString &path, const QString &role = QString());
 	ButtonImages generateButtonImages(const QString &path);
+	QImage generateHoverImage(const QImage &source);
 	QPixmap pixmapFromImage(QImage const &image, QSize size) const;
 	void loadImages();
 

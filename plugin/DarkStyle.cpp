@@ -13,7 +13,7 @@
 #include <QStyleOptionComplex>
 #include <QTableWidget>
 #include <math.h>
-
+#include <stdint.h>
 
 #define MBI_NORMAL                  1
 #define MBI_HOT                     2
@@ -27,47 +27,6 @@ static const int windowsItemHMargin      =  3; // menu item hor text margin
 static const int windowsItemVMargin      =  4; // menu item ver text margin
 static const int windowsArrowHMargin     =  6; // arrow horizontal margin
 static const int windowsRightBorder      = 15; // right border on windows
-
-
-class Lighten {
-private:
-	int lut[256];
-public:
-	Lighten()
-	{
-		const double x = 0.75;
-		for (int i = 0; i < 256; i++) {
-			lut[i] = (int)(pow(i / 255.0, x) * 255);
-		}
-	}
-	int operator [] (int i)
-	{
-		return lut[i];
-	}
-};
-
-QImage generateHoverImage(QImage const &source)
-{
-	QImage newimage;
-	int w = source.width();
-	int h = source.height();
-	if (w > 2 && h > 2) {
-		Lighten lighten;
-		newimage = source;
-		newimage.setText("role", "hover");
-		w -= 2;
-		h -= 2;
-		for (int y = 0; y < h; y++) {
-			QRgb *ptr = (QRgb *)newimage.scanLine(y + 1) + 1;
-			for (int x = 0; x < w; x++) {
-				int v = qGray(ptr[x]);
-				v = lighten[v];
-				ptr[x] = qRgba(v, v, v, qAlpha(ptr[x]));
-			}
-		}
-	}
-	return newimage;
-}
 
 void drawFrame(QPainter *pr, int x, int y, int w, int h, QColor color_topleft, QColor color_bottomright)
 {
@@ -128,6 +87,29 @@ QImage loadImage(QString const &path, QString const &role = QString())
 	return image;
 }
 
+QRgb colorize(QRgb source, QRgb color)
+{
+	int r, g, b;
+	r = g = b = 0;
+	int a = qAlpha(source);
+	if (a != 0) {
+		int t = qGray(source);
+		r = qRed(color);
+		g = qGreen(color);
+		b = qBlue(color);
+		if (t < 128) {
+			r = r * t / 127;
+			g = g * t / 127;
+			b = b * t / 127;
+		} else {
+			int u = 255 - t;
+			r = 255 - (255 - r) * u / 127;
+			g = 255 - (255 - g) * u / 127;
+			b = 255 - (255 - b) * u / 127;
+		}
+	}
+	return qRgba(r, g, b, a);
+}
 
 } // namespace
 
@@ -158,6 +140,7 @@ DarkStyle::DarkStyle()
 {
 	setBaseColor(Qt::white);
 //	setBaseColor(QColor(128, 255, 240));
+//	setBaseColor(QColor(128, 240, 255));
 }
 
 DarkStyle::~DarkStyle()
@@ -188,21 +171,14 @@ QImage DarkStyle::colorizeImage(QImage image)
 	int w = image.width();
 	int h = image.height();
 	if (w > 0 && h > 0) {
-		QRgb lut[256];
-		for (int i = 0; i < 256; i++) {
-			QColor c = color(i);
-			lut[i] = qRgb(c.red(), c.green(), c.blue());
-		}
-		image = image.convertToFormat(QImage::Format_RGBA8888);
+		QColor c = color(128);
+		QRgb rgb = c.rgb();
+		//image = image.convertToFormat(QImage::Format_ARGB32);
+		Q_ASSERT(image.format() == QImage::Format_ARGB32);
 		for (int y = 0; y < h; y++) {
 			QRgb *p = (QRgb *)image.scanLine(y);
 			for (int x = 0; x < w; x++) {
-				int a = qAlpha(p[x]);
-				QColor c(p[x]);
-				int r = c.red();
-				int g = c.green();
-				int b = c.blue();
-				p[x] = qRgba(r, g, b, a);
+				p[x] = colorize(p[x], rgb);
 			}
 		}
 	}
@@ -218,13 +194,40 @@ QImage DarkStyle::loadColorizedImage(QString const &path, const QString &role)
 	return image;
 }
 
+namespace {
+class Lighten {
+private:
+	int lut[256];
+public:
+	Lighten()
+	{
+#if 0
+		const double x = 0.75;
+		for (int i = 0; i < 256; i++) {
+			lut[i] = (int)(pow(i / 255.0, x) * 255);
+		}
+#else
+		for (int i = 0; i < 256; i++) {
+			lut[i] = 255 - (255 - i) * 192 / 256;
+		}
+#endif
+	}
+	int operator [] (int i)
+	{
+		return lut[i];
+	}
+};
+}
+
 DarkStyle::ButtonImages DarkStyle::generateButtonImages(const QString &path)
 {
-	QImage source = loadColorizedImage(path);
+	QImage source = loadImage(path);
 	ButtonImages buttons;
 	int w = source.width();
 	int h = source.height();
 	if (w > 4 && h > 4) {
+		QColor c = color(128);
+		QRgb rgb = c.rgb();
 		Lighten lighten;
 		buttons.im_normal = source;
 		buttons.im_hover = source;
@@ -240,17 +243,49 @@ DarkStyle::ButtonImages DarkStyle::generateButtonImages(const QString &path)
 				int v = (int)qAlpha(src3[x + 3]) - (int)qAlpha(src1[x + 1]);
 				v = (v + 256) / 2;
 				int alpha = qAlpha(src2[x + 2]);
-				dst0[x] = qRgba(v, v, v, alpha);
+//				dst0[x] = qRgba(v, v, v, alpha);
+				dst0[x] = colorize(qRgba(v, v, v, alpha), rgb);
 				v = lighten[v];
-				dst1[x] = qRgba(v, v, v, alpha);
+//				dst1[x] = qRgba(v, v, v, alpha);
+				dst1[x] = colorize(qRgba(v, v, v, alpha), rgb);
 			}
 		}
+//		buttons.im_normal = colorizeImage(buttons.im_normal);
+//		buttons.im_hover  = colorizeImage(buttons.im_hover);
 		buttons.im_normal.setText("name", source.text("name"));
 		buttons.im_hover.setText("name", source.text("name"));
 		buttons.im_normal.setText("role", "normal");
 		buttons.im_hover.setText("role", "hover");
 	}
 	return buttons;
+}
+
+QImage DarkStyle::generateHoverImage(QImage const &source)
+{
+	QImage newimage;
+	int w = source.width();
+	int h = source.height();
+	if (w > 2 && h > 2) {
+		QColor c = color(128);
+		QRgb rgb = c.rgb();
+		Lighten lighten;
+		newimage = source;
+		Q_ASSERT(newimage.format() == QImage::Format_ARGB32);
+		w -= 2;
+		h -= 2;
+		for (int y = 0; y < h; y++) {
+			QRgb *ptr = (QRgb *)newimage.scanLine(y + 1) + 1;
+			for (int x = 0; x < w; x++) {
+				int v = qGray(ptr[x]);
+				v = lighten[v];
+//				ptr[x] = qRgba(v, v, v, qAlpha(ptr[x]));
+				ptr[x] = colorize(qRgba(v, v, v, qAlpha(ptr[x])), rgb);
+			}
+		}
+//		newimage = colorizeImage(newimage);
+		newimage.setText("role", "hover");
+	}
+	return newimage;
 }
 
 void DarkStyle::loadImages()
@@ -2092,8 +2127,8 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 							gradient.setFinalStop(grooveRect.right(), grooveRect.center().y());
 						}
 						groovePainter.setPen(Qt::NoPen);
-						gradient.setColorAt(0, QColor(32, 32, 32));
-						gradient.setColorAt(1, QColor(96, 96, 96));
+						gradient.setColorAt(0, color(32));
+						gradient.setColorAt(1, color(96));
 						groovePainter.setBrush(gradient);
 						groovePainter.drawRoundedRect(grooveRect, r, r);
 						groovePainter.end();
@@ -2130,20 +2165,20 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 
 						if (horizontal) {
 							if (ticksAbove) {
-								p->setPen(QColor(128, 128, 128));
+								p->setPen(color(128));
 								p->drawLine(pos, slider->rect.top() + extra, pos, slider->rect.top() + tickSize);
 							}
 							if (ticksBelow) {
-								p->setPen(QColor(0, 0, 0));
+								p->setPen(color(0));
 								p->drawLine(pos, slider->rect.bottom() - extra, pos, slider->rect.bottom() - tickSize);
 							}
 						} else {
 							if (ticksAbove) {
-								p->setPen(QColor(128, 128, 128));
+								p->setPen(color(128));
 								p->drawLine(slider->rect.left() + extra, pos, slider->rect.left() + tickSize, pos);
 							}
 							if (ticksBelow) {
-								p->setPen(QColor(0, 0, 0));
+								p->setPen(color(0));
 								p->drawLine(slider->rect.right() - extra, pos, slider->rect.right() - tickSize, pos);
 							}
 						}
@@ -2171,13 +2206,13 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 						QLinearGradient gradient;
 						gradient.setStart(pixmapRect.topLeft());
 						gradient.setFinalStop(pixmapRect.bottomRight());
-						gradient.setColorAt(0, QColor(128, 128, 128));
+						gradient.setColorAt(0, color(128));
 						gradient.setColorAt(1, QColor(0, 0, 0));
 						handlePainter.save();
 						handlePainter.setClipPath(path);
 						handlePainter.fillRect(r, gradient);
 
-						handlePainter.setPen(QPen(QColor(128, 128, 128), 2));
+						handlePainter.setPen(QPen(color(128), 2));
 						handlePainter.setBrush(Qt::NoBrush);
 						handlePainter.drawEllipse(r.adjusted(0, 0, 2, 2));
 						handlePainter.setPen(QPen(QColor(0, 0, 0), 2));
