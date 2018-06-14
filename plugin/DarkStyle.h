@@ -23,7 +23,6 @@ private:
 		ButtonImages slider;
 	};
 
-//	QImage loadImage(const QString &path, const QString &role = QString());
 	QImage colorizeImage(QImage image);
 	QImage loadColorizedImage(const QString &path, const QString &role = QString());
 	ButtonImages generateButtonImages(const QString &path);
@@ -42,9 +41,10 @@ private:
 	void drawMenuBarBG(QPainter *p, const QStyleOption *option, const QWidget *widget) const;
 	QColor color(int level, int alpha = 255) const;
 public:
-	DarkStyle();
+	DarkStyle(QColor base_color = QColor());
 	~DarkStyle();
 
+	QColor getBaseColor();
 	void setBaseColor(QColor color);
 	void setScrollBarExtent(int n);
 

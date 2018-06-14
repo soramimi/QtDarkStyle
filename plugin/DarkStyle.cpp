@@ -119,6 +119,7 @@ static const int TEXTURE_CACHE_SIZE = 100;
 
 struct DarkStyle::Private {
 	QColor base_color;
+	bool images_loaded = false;
 
     ScrollBarTextures hsb;
     ScrollBarTextures vsb;
@@ -135,23 +136,28 @@ struct DarkStyle::Private {
 
 };
 
-DarkStyle::DarkStyle()
+DarkStyle::DarkStyle(QColor base_color)
     : m(new Private)
 {
-	setBaseColor(Qt::white);
+	setBaseColor(base_color);
 //	setBaseColor(QColor(128, 255, 240));
 //	setBaseColor(QColor(128, 240, 255));
 }
 
 DarkStyle::~DarkStyle()
 {
-    delete m;
+	delete m;
+}
+
+QColor DarkStyle::getBaseColor()
+{
+	return m->base_color;
 }
 
 void DarkStyle::setBaseColor(QColor color)
 {
 	m->base_color = color;
-	loadImages();
+	m->images_loaded = false;
 }
 
 QColor DarkStyle::color(int level, int alpha) const
@@ -290,6 +296,12 @@ QImage DarkStyle::generateHoverImage(QImage const &source)
 
 void DarkStyle::loadImages()
 {
+	if (m->images_loaded) return;
+
+	if (!m->base_color.isValid()) {
+		setBaseColor(Qt::white);
+	}
+
 	m->button_normal        = loadColorizedImage(QLatin1String(":/darktheme/button/button_normal.png"), QLatin1String("normal"));
 	m->button_press         = loadColorizedImage(QLatin1String(":/darktheme/button/button_press.png"), QLatin1String("press"));
 
@@ -307,6 +319,8 @@ void DarkStyle::loadImages()
 
 	m->progress_horz = loadImage(QLatin1String(":/darktheme/progress/horz.png"));
 	m->progress_vert = loadImage(QLatin1String(":/darktheme/progress/vert.png"));
+
+	m->images_loaded = true;
 }
 
 QPixmap DarkStyle::pixmapFromImage(const QImage &image, QSize size) const
@@ -347,6 +361,10 @@ void DarkStyle::drawNinePatchImage(QPainter *p, const QImage &image, const QRect
 
 void DarkStyle::polish(QPalette &palette)
 {
+	if (!m->base_color.isValid()) {
+		setBaseColor(Qt::white);
+	}
+	loadImages();
 	palette = QPalette(color(64));
 }
 
@@ -2206,13 +2224,13 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 						QLinearGradient gradient;
 						gradient.setStart(pixmapRect.topLeft());
 						gradient.setFinalStop(pixmapRect.bottomRight());
-						gradient.setColorAt(0, color(128));
+						gradient.setColorAt(0, color(192));
 						gradient.setColorAt(1, QColor(0, 0, 0));
 						handlePainter.save();
 						handlePainter.setClipPath(path);
 						handlePainter.fillRect(r, gradient);
 
-						handlePainter.setPen(QPen(color(128), 2));
+						handlePainter.setPen(QPen(color(192), 2));
 						handlePainter.setBrush(Qt::NoBrush);
 						handlePainter.drawEllipse(r.adjusted(0, 0, 2, 2));
 						handlePainter.setPen(QPen(QColor(0, 0, 0), 2));
