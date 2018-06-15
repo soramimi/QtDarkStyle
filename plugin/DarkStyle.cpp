@@ -63,7 +63,7 @@ QString pixmapkey(QString const &name, QString const &role, QSize const &size, Q
 
 void drawRaisedFrame(QPainter *p, const QRect &rect, const QPalette &palette)
 {
-    p->save();
+	p->save();
     int x = rect.x();
     int y = rect.y();
     int w = rect.width();
@@ -1116,8 +1116,16 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 	}
 #endif
 	if (ce == CE_ShapedFrame) {
-		if (qobject_cast<QAbstractItemView const *>(widget)) {
-			p->fillRect(option->rect, option->palette.color(QPalette::Window));
+		bool raised = (option->state & State_Raised);
+		bool sunken = (option->state & State_Sunken);
+
+//		if (qobject_cast<QAbstractItemView const *>(widget)) {
+//			p->fillRect(option->rect, option->palette.color(QPalette::Window));
+//		}
+
+		if (raised) {
+			drawFrame(p, option->rect, option->palette.color(QPalette::Light), option->palette.color(QPalette::Dark));
+		} else if (sunken) {
 			drawFrame(p, option->rect, option->palette.color(QPalette::Dark), option->palette.color(QPalette::Light));
 		}
 		return;
