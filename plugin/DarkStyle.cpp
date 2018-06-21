@@ -12,6 +12,7 @@
 #include <QPixmapCache>
 #include <QStyleOptionComplex>
 #include <QTableWidget>
+#include <QToolTip>
 #include <math.h>
 #include <stdint.h>
 
@@ -933,12 +934,13 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 			r.translate(0, -1);
 			p->fillRect(r, option->palette.color(QPalette::Dark));
 		}
-
 		return;
 	}
-//	if (pe == QStyle::PE_PanelItemViewRow) {
-
-//	}
+	if (pe == QStyle::PE_PanelTipLabel) {
+		p->fillRect(option->rect, QColor(255, 255, 192));
+		drawFrame(p, option->rect, Qt::black, Qt::black);
+		return;
+	}
 //	qDebug() << pe;
 	QProxyStyle::drawPrimitive(pe, option, p, widget);
 }
