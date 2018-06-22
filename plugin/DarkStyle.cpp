@@ -367,6 +367,9 @@ void DarkStyle::polish(QPalette &palette)
 	}
 	loadImages();
 	palette = QPalette(color(64));
+#ifndef Q_OS_WIN
+	palette.setColor(QPalette::ToolTipText, Qt::white); // ツールチップの文字色
+#endif
 }
 
 void DarkStyle::drawGutter(QPainter *p, const QRect &r) const
@@ -936,11 +939,20 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 		}
 		return;
 	}
+#ifndef Q_OS_WIN
 	if (pe == QStyle::PE_PanelTipLabel) {
-		p->fillRect(option->rect, QColor(255, 255, 192));
-		drawFrame(p, option->rect, Qt::black, Qt::black);
+		// ツールチップの背景パネル
+		QLinearGradient g;
+		g.setStart(option->rect.topLeft());
+		g.setFinalStop(option->rect.bottomLeft());
+		g.setColorAt(0, color(80));
+		g.setColorAt(1, color(40));
+		p->fillRect(option->rect, g);
+		QColor framecolor = Qt::black;//color(128);
+		drawFrame(p, option->rect, framecolor, framecolor);
 		return;
 	}
+#endif
 //	qDebug() << pe;
 	QProxyStyle::drawPrimitive(pe, option, p, widget);
 }
@@ -1251,7 +1263,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				drawSelectedMenuFrame(option, p, option->rect, widget, false);
 			}
 
-			if (checked) {
+			if (checked && !ignoreCheckMark) {
 				const qreal boxMargin = 3.5;
 				const qreal boxWidth = checkcol - 2 * boxMargin;
 				const int checkColHOffset = windowsItemHMargin + windowsItemFrame - 1;
