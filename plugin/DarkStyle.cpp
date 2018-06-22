@@ -368,7 +368,7 @@ void DarkStyle::polish(QPalette &palette)
 	loadImages();
 	palette = QPalette(color(64));
 #ifndef Q_OS_WIN
-	palette.setColor(QPalette::ToolTipText, Qt::white); // ツールチップの文字色
+	palette.setColor(QPalette::ToolTipText, Qt::black); // ツールチップの文字色
 #endif
 }
 
@@ -942,14 +942,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 #ifndef Q_OS_WIN
 	if (pe == QStyle::PE_PanelTipLabel) {
 		// ツールチップの背景パネル
-		QLinearGradient g;
-		g.setStart(option->rect.topLeft());
-		g.setFinalStop(option->rect.bottomLeft());
-		g.setColorAt(0, color(80));
-		g.setColorAt(1, color(40));
-		p->fillRect(option->rect, g);
-		QColor framecolor = Qt::black;//color(128);
-		drawFrame(p, option->rect, framecolor, framecolor);
+		p->fillRect(option->rect, Qt::white);
 		return;
 	}
 #endif
