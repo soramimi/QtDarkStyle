@@ -513,6 +513,13 @@ void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
 		QBrush br(gr);
 		p->fillRect(x, y, w, h, br);
 
+		if (option->state & State_HasFocus) {
+			p->setPen(QColor(80, 160, 255));
+			p->setBrush(Qt::NoBrush);
+			double m = 3.5;
+			p->drawRoundedRect(((QRectF)option->rect).adjusted(m, m, -m, -m), 4, 4);
+		}
+
 		p->restore();
 	}
 }
