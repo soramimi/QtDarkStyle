@@ -953,7 +953,8 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 #ifndef Q_OS_WIN
 	if (pe == QStyle::PE_PanelTipLabel) {
 		// ツールチップの背景パネル
-		p->fillRect(option->rect, Qt::white);
+		p->fillRect(option->rect, QColor(255, 255, 192));
+		drawFrame(p, option->rect, Qt::black, Qt::black);
 		return;
 	}
 #endif
