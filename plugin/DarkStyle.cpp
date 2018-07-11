@@ -1134,7 +1134,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			int lw = o->lineWidth;
 			if (lw > 0) {
 				QRect r = o->rect;
-				if (o->frameShape == QFrame::Panel) {
+				if (o->frameShape == QFrame::Panel || o->frameShape == QFrame::HLine || o->frameShape == QFrame::VLine) {
 					if (o->state & (State_Sunken | State_Raised)) {
 						if (r.width() < r.height()) {
 							if (r.width() > 2) {
@@ -1172,7 +1172,8 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						int x = r.x();
 						int y = r.y();
 						int w = r.width();
-						int h = r.height();					QColor color = o->palette.color(QPalette::Shadow);
+						int h = r.height();
+						QColor color = o->palette.color(QPalette::Shadow);
 						p->fillRect(x, y, w, h, color);
 					}
 				} else if (o->frameShape == QFrame::Box) {
