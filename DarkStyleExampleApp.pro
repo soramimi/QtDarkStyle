@@ -19,7 +19,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 INCLUDEPATH += $$PWD
 INCLUDEPATH += $$PWD/src
 
-LIBS += -L$$PWD/_out/ -ldarkstyleplugin
+LIBS += -L$$PWD/_out/
+# -ldarkstyleplugin
 
 SOURCES += \
         example/main.cpp \

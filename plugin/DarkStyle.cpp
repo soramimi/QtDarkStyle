@@ -642,6 +642,9 @@ QRect DarkStyle::subControlRect(ComplexControl cc, const QStyleOptionComplex *op
 					int topMargin = 0;
 					int topHeight = 0;
 					int verticalAlignment = proxy()->styleHint(SH_GroupBox_TextLabelVerticalAlignment, groupBox, widget);
+#ifdef Q_OS_MACX
+					verticalAlignment |= Qt::AlignVCenter;
+#endif
 					if (groupBox->text.size() || (groupBox->subControls & QStyle::SC_GroupBoxCheckBox)) {
 						topHeight = groupBox->fontMetrics.height();
 						if (verticalAlignment & Qt::AlignVCenter) {
