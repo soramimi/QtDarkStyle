@@ -7,6 +7,7 @@ CONFIG += plugin
 CONFIG += c++11
 
 DESTDIR = $$PWD/_out
+macx:DESTDIR = $$PWD/_out/DarkStyleExampleApp.app/Contents/MacOS
 
 unix:QMAKE_CXXFLAGS += -Wall -Wextra -Werror=return-type -Werror=trigraphs -Wno-switch -Wno-reorder
 
