@@ -460,6 +460,7 @@ void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
 	int w =	rect.width();
 	int h = rect.height();
 
+#ifdef Q_OS_MAC
 	int margin = pixelMetric(PM_ButtonMargin, option, nullptr);
 	if (margin > 0) {
 		int n = std::min(w, h);
@@ -471,6 +472,7 @@ void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
 			h = rect.height();
 		}
 	}
+#endif
 
 	bool pressed = (option->state & (State_Sunken | State_On));
 	bool hover = (option->state & State_MouseOver);
