@@ -1261,7 +1261,11 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				stateId = PBS_NORMAL;
 			}
 
-			drawButton(p, option);
+			if (btn->features & QStyleOptionButton::Flat) {
+				// nop
+			} else {
+				drawButton(p, option);
+			}
 
 			if (btn->features & QStyleOptionButton::HasMenu) {
 				int mbiw = 0, mbih = 0;
