@@ -422,10 +422,10 @@
            </size>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Plain</enum>
+           <enum>QFrame::Sunken</enum>
           </property>
           <property name="lineWidth">
-           <number>3</number>
+           <number>1</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -444,7 +444,7 @@
      <x>0</x>
      <y>0</y>
      <width>765</width>
-     <height>18</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
