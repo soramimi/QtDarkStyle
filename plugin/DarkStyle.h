@@ -30,12 +30,13 @@ private:
 	QPixmap pixmapFromImage(QImage const &image, QSize size) const;
 	void loadImages();
 
-	QColor colorForSelectedFrame(QStyleOption const *opt) const;
+	QColor selectionColor() const;
 	QColor colorForItemView(QStyleOption const *opt) const;
 
 	void drawNinePatchImage(QPainter *p, QImage const &image, QRect const &r, int w, int h) const;
 	void drawGutter(QPainter *p, QRect const &r) const;
-	void drawSelectedMenuFrame(const QStyleOption *option, QPainter *p, QRect rect, QWidget const *widget, bool deep = false) const;
+	void drawSelectedItemFrame(const QStyleOption *option, QPainter *p, QRect rect, QWidget const *widget, bool deep = false) const;
+	void drawSelectionFrame(QPainter *p, const QRect &rect, double margin) const;
 	void drawButton(QPainter *p, QStyleOption const *option) const;
 	void drawToolButton(QPainter *p, QStyleOption const *option) const;
 	void drawMenuBarBG(QPainter *p, const QStyleOption *option, const QWidget *widget) const;
