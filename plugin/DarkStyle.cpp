@@ -1367,9 +1367,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 		return;
 	}
 	if (ce == CE_TabBarTabShape) {
-//		p->setPen(QPen(Qt::red));
-//		p->drawEllipse(option->rect.adjusted(0, 0, -1, -1));
-//		return;
 		if (const auto *tab = qstyleoption_cast<const QStyleOptionTab *>(option)) {
 			bool rtlHorTabs = (tab->direction == Qt::RightToLeft && (tab->shape == QTabBar::RoundedNorth || tab->shape == QTabBar::RoundedSouth));
 			bool selected = tab->state & State_Selected;
@@ -1558,7 +1555,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 
 					// Delete border
 					if (selected) {
-						p->fillRect(QRect(x1, y1 - 1, (x2 - 1) - x1, 1), Qt::red);
 						p->fillRect(QRect(x1, y1, (x2 - 1) - x1, 1), tab->palette.background());
 					}
 					// Left
