@@ -398,7 +398,7 @@ void DarkStyle::drawSelectedItemFrame(const QStyleOption *option, QPainter *p, Q
 		color->setAlpha(alpha);
 	};
 
-	QString key = QString().sprintf("selection_frame:%02x%02x%02x:%dx%d", color.red(), color.green(), color.blue(), w, h);
+	QString key = QString::asprintf("selection_frame:%02x%02x%02x:%dx%d", color.red(), color.green(), color.blue(), w, h);
 
 	QPixmap pixmap;
 	if (!QPixmapCache::find(key, &pixmap)) {
@@ -445,29 +445,31 @@ void DarkStyle::drawSelectionFrame(QPainter *p, QRect const &rect, double margin
 	p->drawRoundedRect(((QRectF)rect).adjusted(margin, margin, -margin, -margin), 4, 4);
 }
 
-void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
+void DarkStyle::drawButton(QPainter *p, const QStyleOption *option, bool mac_margin) const
 {
 	QRect rect = option->rect;
 	int w =	rect.width();
 	int h = rect.height();
-
+	
 #ifdef Q_OS_MAC
-	int margin = pixelMetric(PM_ButtonMargin, option, nullptr);
-	if (margin > 0) {
-		int n = std::min(w, h);
-		if (n > margin * 2) {
-			n = (n - margin * 2) / 2;
-			if (n > margin) n = margin;
-			rect = rect.adjusted(n, n, -n, -n);
-			w = rect.width();
-			h = rect.height();
+	if (mac_margin) {
+		int margin = pixelMetric(PM_ButtonMargin, option, nullptr);
+		if (margin > 0) {
+			int n = std::min(w, h);
+			if (n > margin * 2) {
+				n = (n - margin * 2) / 2;
+				if (n > margin) n = margin;
+				rect = rect.adjusted(n, n, -n, -n);
+				w = rect.width();
+				h = rect.height();
+			}
 		}
 	}
 #endif
-
+	
 	bool pressed = (option->state & (State_Sunken | State_On));
 	bool hover = (option->state & State_MouseOver);
-
+	
 	if (pressed) {
 		drawNinePatchImage(p, m->button_press, rect, w, h);
 	} else {
@@ -479,7 +481,7 @@ void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
 		p->save();
 		p->setRenderHint(QPainter::Antialiasing);
 		p->setClipPath(path);
-
+		
 		int x = rect.x();
 		int y = rect.y();
 		int w = rect.width();
@@ -520,7 +522,7 @@ void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
 		gr.setColorAt(1, color1);
 		QBrush br(gr);
 		p->fillRect(x, y, w, h, br);
-
+		
 		if (option->state & State_HasFocus) {
 #if 1
 			drawSelectionFrame(p, rect, 3.5);
@@ -528,7 +530,7 @@ void DarkStyle::drawButton(QPainter *p, const QStyleOption *option) const
 			p->fillRect(x, y, w, h, QColor(80, 160, 255, 32));
 #endif
 		}
-
+		
 		p->restore();
 	}
 }
@@ -827,10 +829,6 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 			int y = option->rect.y();
 			int w = option->rect.width();
 			int h = option->rect.height();
-//			{
-//				drawFrame(p, x, y, w, h, Qt::blue, Qt::blue);
-//				return;
-//			}
 #ifdef Q_OS_WIN
 			switch (o->shape) {
 			case QTabBar::RoundedNorth:
@@ -1391,10 +1389,16 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 		return;
 	}
 	if (ce == CE_TabBarTabShape) {
-		if (0) {
-			p->fillRect(option->rect, Qt::red);
+#ifdef Q_OS_MAC
+		if (const auto *o = qstyleoption_cast<const QStyleOptionTab *>(option)) {
+			drawButton(p, option, false);
+			bool selected = o->state & State_Selected;
+			if (selected) {
+				drawSelectedItemFrame(o, p, o->rect.adjusted(0, 0, -2, -2), widget);
+			}
 			return;
 		}
+#else
 		if (const auto *o = qstyleoption_cast<const QStyleOptionTab *>(option)) {
 			bool rtlHorTabs = (o->direction == Qt::RightToLeft && (o->shape == QTabBar::RoundedNorth || o->shape == QTabBar::RoundedSouth));
 			bool selected = o->state & State_Selected;
@@ -1680,6 +1684,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			}
 			}
 		}
+#endif
 		return;
 	}
 	if (ce == CE_ProgressBarGroove || ce == CE_ProgressBarContents) {
