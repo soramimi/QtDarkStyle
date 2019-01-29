@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 	DarkStyleInterface *plugin = dynamic_cast<DarkStyleInterface *>(loader.instance());
 	if (plugin) {
 		a.setStyle(plugin->createDarkStyle());
-//        a.setStyle(plugin->createStandardStyle());
+//		a.setStyle(plugin->createStandardStyle());
 	}
 
 	MainWindow w;
