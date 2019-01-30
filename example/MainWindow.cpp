@@ -37,6 +37,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->tableWidget->setItem(0, 1, new QTableWidgetItem("Fuga"));
 	ui->tableWidget->setItem(1, 0, new QTableWidgetItem("Piyo"));
 	ui->tableWidget->setItem(1, 1, new QTableWidgetItem("Pemo"));
+	QFont font = ui->tableWidget->item(0, 0)->font();
+	font.setBold(true);
+	ui->tableWidget->item(0, 0)->setFont(font);
 
 	ui->comboBox->addItem("Hoge");
 	ui->comboBox->addItem("Fuga");
