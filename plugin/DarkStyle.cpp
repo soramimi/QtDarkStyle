@@ -826,11 +826,11 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 		return;
 	}
 	if (pe == PE_FrameTabWidget) {
-		if (QStyleOptionTabWidgetFrame const *o = qstyleoption_cast<QStyleOptionTabWidgetFrame const *>(option)) {
-			int x = option->rect.x();
-			int y = option->rect.y();
-			int w = option->rect.width();
-			int h = option->rect.height();
+		if (auto const *o = qstyleoption_cast<QStyleOptionTabWidgetFrame const *>(option)) {
+			int x = o->rect.x();
+			int y = o->rect.y();
+			int w = o->rect.width();
+			int h = o->rect.height();
 #ifdef Q_OS_WIN
 			switch (o->shape) {
 			case QTabBar::RoundedNorth:
@@ -845,7 +845,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 				break;
 			}
 #endif
-			drawRaisedFrame(p, QRect(x, y, w, h), option->palette);
+			drawRaisedFrame(p, QRect(x, y, w, h), o->palette);
 			return;
 		}
 	}
@@ -1414,7 +1414,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			bool rightAligned = (!rtlHorTabs && tabBarAlignment == Qt::AlignRight) || (rtlHorTabs && tabBarAlignment == Qt::AlignLeft);
 
 			QColor light = o->palette.light().color();
-			QColor dark = o->palette.dark().color();
+//			QColor dark = o->palette.dark().color();
 			QColor shadow = o->palette.shadow().color();
 			int borderThinkness = proxy()->pixelMetric(PM_TabBarBaseOverlap, o, widget);
 			if (selected) {
@@ -1700,7 +1700,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 	}
 	if (ce == CE_HeaderSection || ce == CE_HeaderEmptyArea) {
 		bool horz = true;
-		if (QStyleOptionHeader const *o = qstyleoption_cast<QStyleOptionHeader const *>(option)) {
+		if (auto const *o = qstyleoption_cast<QStyleOptionHeader const *>(option)) {
 			horz = (o->orientation == Qt::Horizontal);
 		}
 		int x = option->rect.x();
@@ -1730,16 +1730,16 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 		return;
 	}
 	if (ce == CE_HeaderLabel) {
-		if (QStyleOptionHeader const *o = qstyleoption_cast<QStyleOptionHeader const *>(option)) {
+		if (auto const *o = qstyleoption_cast<QStyleOptionHeader const *>(option)) {
 			QRect rect = o->rect;
 			if (!o->icon.isNull()) {
 				int iconExtent = pixelMetric(PM_SmallIconSize, option, widget);
 				QPixmap pixmap = o->icon.pixmap(QSize(iconExtent, iconExtent), (o->state & State_Enabled) ? QIcon::Normal : QIcon::Disabled);
-				int pixw = pixmap.width() / pixmap.devicePixelRatio();
+				int pixw = int(pixmap.width() / pixmap.devicePixelRatio());
 
 				QRect aligned = alignedRect(o->direction, QFlag(o->iconAlignment), pixmap.size() / pixmap.devicePixelRatio(), rect);
 				QRect inter = aligned.intersected(rect);
-				p->drawPixmap(inter.x(), inter.y(), pixmap, inter.x() - aligned.x(), inter.y() - aligned.y(), aligned.width() * pixmap.devicePixelRatio(), pixmap.height() * pixmap.devicePixelRatio());
+				p->drawPixmap(inter.x(), inter.y(), pixmap, inter.x() - aligned.x(), inter.y() - aligned.y(), int(aligned.width() * pixmap.devicePixelRatio()), int(pixmap.height() * pixmap.devicePixelRatio()));
 
 				const int margin = pixelMetric(QStyle::PM_HeaderMargin, option, widget);
 				if (o->direction == Qt::LeftToRight) {
