@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //	ui->widget->setImage(buttons);
 
 	ui->listWidget->addItem("Hello, world");
+	ui->listWidget->item(0)->setCheckState(Qt::Checked);
 
 	QTreeWidgetItem *item = new QTreeWidgetItem(QStringList{"Foo"});
 	ui->treeWidget->addTopLevelItem(item);

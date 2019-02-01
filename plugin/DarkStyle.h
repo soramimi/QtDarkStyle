@@ -4,6 +4,8 @@
 #include <QPainter>
 #include <QProxyStyle>
 
+class QStyleOptionViewItem;
+
 class DarkStyle : public QProxyStyle {
 public:
 private:
@@ -41,6 +43,7 @@ private:
 	void drawToolButton(QPainter *p, QStyleOption const *option) const;
 	void drawMenuBarBG(QPainter *p, const QStyleOption *option, const QWidget *widget) const;
 	QColor color(int level, int alpha = 255) const;
+	void viewItemDrawText(QPainter *p, const QStyleOptionViewItem *option, const QRect &rect) const;
 public:
 	DarkStyle(const QColor &base_color = QColor());
 	~DarkStyle() override;
