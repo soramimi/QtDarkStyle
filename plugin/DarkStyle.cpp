@@ -438,12 +438,16 @@ void DarkStyle::drawSelectedItemFrame(QPainter *p, QRect rect, const QWidget *wi
 	p->drawPixmap(x, y, w, h, pixmap);
 }
 
-void DarkStyle::drawSelectionFrame(QPainter *p, QRect const &rect, double margin) const
+void DarkStyle::drawSelectionFrame(QPainter *p, QRect const &rect, int margin) const
 {
+	p->save();
+	p->setRenderHint(QPainter::Antialiasing);
 	QColor color = selectionColor();
 	p->setPen(color);
 	p->setBrush(Qt::NoBrush);
-	p->drawRoundedRect(((QRectF)rect).adjusted(margin, margin, -margin, -margin), 4, 4);
+	double m = margin + 0.5;
+	p->drawRoundedRect(((QRectF)rect).adjusted(m, m, -m, -m), 4, 4);
+	p->restore();
 }
 
 void DarkStyle::drawButton(QPainter *p, const QStyleOption *option, bool mac_margin) const
@@ -528,7 +532,7 @@ void DarkStyle::drawButton(QPainter *p, const QStyleOption *option, bool mac_mar
 		
 		if (option->state & State_HasFocus) {
 #if 1
-			drawSelectionFrame(p, rect, 3.5);
+			drawSelectionFrame(p, rect, 3);
 #else
 			p->fillRect(x, y, w, h, QColor(80, 160, 255, 32));
 #endif
@@ -818,8 +822,9 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 //    qDebug() << pe;
 #ifdef Q_OS_LINUX
 	if (pe == PE_FrameFocusRect) {
-		QColor color(64, 128, 255);
-		drawFrame(p, option->rect, color, color);
+//		QColor color(64, 128, 255);
+//		drawFrame(p, option->rect, color, color);
+		drawSelectionFrame(p, option->rect, 0);
 		return;
 	}
 #endif
