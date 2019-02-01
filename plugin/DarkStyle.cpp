@@ -446,7 +446,7 @@ void DarkStyle::drawSelectionFrame(QPainter *p, QRect const &rect, int margin) c
 	p->setPen(color);
 	p->setBrush(Qt::NoBrush);
 	double m = margin + 0.5;
-	p->drawRoundedRect(((QRectF)rect).adjusted(m, m, -m, -m), 4, 4);
+	p->drawRoundedRect(((QRectF)rect).adjusted(m, m, -m, -m), 3, 3);
 	p->restore();
 }
 
@@ -820,14 +820,14 @@ void DarkStyle::viewItemDrawText(QPainter *p, const QStyleOptionViewItem *option
 void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, QPainter *p, const QWidget *widget) const
 {
 //    qDebug() << pe;
-#ifdef Q_OS_LINUX
+//#ifdef Q_OS_LINUX
 	if (pe == PE_FrameFocusRect) {
 //		QColor color(64, 128, 255);
 //		drawFrame(p, option->rect, color, color);
 		drawSelectionFrame(p, option->rect, 0);
 		return;
 	}
-#endif
+//#endif
 	if (pe == PE_IndicatorArrowDown) {
 		switch (pe) {
 		case PE_IndicatorArrowUp:
@@ -1953,6 +1953,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			QRect checkRect = subElementRect(SE_ItemViewItemCheckIndicator, o, widget);
 			QRect iconRect = subElementRect(SE_ItemViewItemDecoration, o, widget);
 			QRect textRect = subElementRect(SE_ItemViewItemText, o, widget);
+			textRect.adjust(2, 0, 0, 0);
 
 			// draw the background
 			drawPrimitive(PE_PanelItemViewItem, o, p, widget);
