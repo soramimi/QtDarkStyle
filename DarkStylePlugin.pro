@@ -18,7 +18,7 @@ SOURCES += \
     plugin/DarkStyle.cpp \
     plugin/DarkStylePlugin.cpp \
     plugin/StandardStyle.cpp \
-    plugin/TraditionalWindowsStyleTreeControl.cpp
+    plugin/TraditionalWindowsStyleTreeControl.cpp \
 
 HEADERS += \
     ../DarkStyleInterface.h \
