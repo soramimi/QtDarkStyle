@@ -1,25 +1,13 @@
 #include "DarkStyle.h"
 #include "NinePatch.h"
 #include "TraditionalWindowsStyleTreeControl.h"
-#include <QApplication>
 #include <QComboBox>
-#include <QCommonStyle>
-#include <QDebug>
 #include <QDialogButtonBox>
-#include <QDockWidget>
 #include <QInputDialog>
-#include <QListView>
 #include <QMessageBox>
 #include <QPainterPath>
-#include <QPixmapCache>
-#include <QStyleOptionComplex>
-#include <QStyleOptionFrameV3>
 #include <QTableWidget>
-#include <QTextLayout>
-#include <QToolTip>
-#include <cmath>
-#include <cstdint>
-#include "qstylehelper.i"
+#include "darkstylehelper.i"
 
 #define MBI_NORMAL                  1
 #define MBI_HOT                     2
@@ -101,11 +89,7 @@ void drawTabFrame(QPainter *p, const QRect &rect, const QPalette &palette)
 	int h = rect.height();
 	p->setClipRect(x, y, w, h);
 	p->fillRect(x, y, w, h, palette.color(QPalette::Window));
-	p->fillRect(x, y, w - 1, 1, palette.color(QPalette::Light));
-	p->fillRect(x, y, 1, h - 1, palette.color(QPalette::Light));
-	p->fillRect(x, y + h - 1, w, 1, palette.color(QPalette::Shadow));
-	p->fillRect(x + w - 1, y, 1, h, palette.color(QPalette::Shadow));
-//	drawShadePanel(p, rect, palette, QStyle::State_Raised);
+	drawShadePanel(p, rect, palette, QStyle::State_Raised);
 	p->restore();
 }
 
@@ -686,7 +670,7 @@ int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const
 		val = 24;
 		break;
 	case PM_ScrollBarExtent:
-		val = 14;
+		val = 16;
 		break;
 	case PM_SliderThickness:
 	case PM_SliderLength:
@@ -757,7 +741,7 @@ int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const
 	case PM_IndicatorWidth:
 	case PM_ExclusiveIndicatorHeight:
 	case PM_ExclusiveIndicatorWidth:
-		val = 14;
+		val = 16;
 		break;
 	case PM_ScrollView_ScrollBarSpacing:
 		val = 0;
@@ -772,8 +756,24 @@ int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const
 	default:
 		return QCommonStyle::pixelMetric(metric, option, widget);
 	}
-	return QStyleHelper::dpiScaled(val, option);
+	return DarkStyleHelper::dpiScaled(val, option);
 	//	return val;
+}
+
+QRect DarkStyle::indicatorRect(const QStyleOption *option, const QWidget *widget, QRect const &rect) const
+{
+	int w = proxy()->pixelMetric(PM_IndicatorWidth, option, widget);
+	int h = proxy()->pixelMetric(PM_IndicatorHeight, option, widget);
+	int x = rect.x();
+	int y = rect.y();
+	int extent = std::min(rect.width(), rect.height());
+	if (extent > w || extent > h) {
+		auto e = std::min(w, h);
+		x += (extent - e) / 2;
+		y += (extent - e) / 2;
+		extent = e;
+	}
+	return {x, y, w, h};
 }
 
 QRect DarkStyle::subControlRect(ComplexControl cc, const QStyleOptionComplex *option, SubControl sc, const QWidget *widget) const
@@ -1312,29 +1312,51 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 	}
 #endif
 	if (pe == PE_IndicatorCheckBox) {
-		if (option->state & State_NoChange) {
-			p->setPen(option->palette.windowText().color());
-			p->fillRect(option->rect, option->palette.brush(QPalette::Button));
-			p->drawRect(option->rect);
-			p->drawLine(option->rect.topLeft(), option->rect.bottomRight());
-		} else {
-			drawShadePanel(p, option->rect, option->palette, State_Sunken);
+//		if (option->state & State_NoChange) {
+//			p->setPen(option->palette.windowText().color());
+//			p->fillRect(option->rect, option->palette.brush(QPalette::Button));
+//			p->drawRect(option->rect);
+//			p->drawLine(option->rect.topLeft(), option->rect.bottomRight());
+//		} else
+		{
+			QRect rect = indicatorRect(option, widget, option->rect);
+			int x = rect.x();
+			int y = rect.y();
+			int extent = rect.height();
+			drawShadePanel(p, rect, option->palette, State_Sunken);
+			if (option->state & (State_Sunken | State_On)) {
+				p->save();
+				p->translate(x + 2, y + 2);
+				p->setRenderHint(QPainter::Antialiasing);
+				p->setPen(QPen(option->palette.windowText(), 2));
+				int w = extent - 4;
+				int h = extent - 4;
+				p->setClipRect(0, 0, w, h);
+				int x0 = w - 1;
+				int y0 = 1;
+				int n = w * 0.6;
+				auto Do = [&](int x1, int y1){
+					p->drawLine(x0, y0, x1, y1);
+					x0 = x1;
+					y0 = y1;
+				};
+				Do(x0 - n, h - 1);
+				Do(x0 - n, 1);
+				p->restore();
+			}
 		}
 		return;
 	}
 	if (pe == PE_IndicatorRadioButton) {
-		QRect ir = option->rect;
+		QRectF rect = indicatorRect(option, widget, option->rect);
 		p->setPen(option->palette.dark().color());
-//		p->drawArc(option->rect, 0, 5760);
 		drawShadeEllipse(p, option->rect, option->palette, QStyle::State_Sunken);
 		if (option->state & (State_Sunken | State_On)) {
-			ir.adjust(2, 2, -3, -3);
+			const int N = 3;
+			rect.adjust(N, N, -N, -N);
 			p->setRenderHint(QPainter::Antialiasing);
 			p->setBrush(option->palette.windowText());
-			bool oldQt4CompatiblePainting = p->testRenderHint(QPainter::Qt4CompatiblePainting);
-			p->setRenderHint(QPainter::Qt4CompatiblePainting);
-			p->drawEllipse(ir);
-			p->setRenderHint(QPainter::Qt4CompatiblePainting, oldQt4CompatiblePainting);
+			p->drawEllipse(rect);
 		}
 		return;
 	}
@@ -1442,7 +1464,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 	if (ce == CE_RadioButton || ce == CE_CheckBox) {
 		if (auto const *o = qstyleoption_cast<QStyleOptionButton const *>(option)) {
 			bool isRadio = (ce == CE_RadioButton);
-
 			QStyleOptionButton subopt = *o;
 			subopt.rect = subElementRect(isRadio ? SE_RadioButtonIndicator : SE_CheckBoxIndicator, o, widget);
 			proxy()->drawPrimitive(isRadio ? PE_IndicatorRadioButton : PE_IndicatorCheckBox, &subopt, p, widget);
@@ -1670,7 +1691,8 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			o->rect.getRect(&x, &y, &w, &h);
 			int tab = o->tabWidth;
 			bool dis = !(o->state & State_Enabled);
-			bool checked = (o->checkType != QStyleOptionMenuItem::NotCheckable) && o->checked;
+			bool checkable = (o->checkType != QStyleOptionMenuItem::NotCheckable);
+			bool checked = checkable && o->checked;
 			bool act = o->state & State_Selected;
 
 			if (o->menuItemType == QStyleOptionMenuItem::Separator) {
@@ -1693,7 +1715,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			int xm = windowsItemFrame + checkcol + windowsItemHMargin + (gutterWidth - o->rect.x()) - 1;
 			int xpos = o->rect.x() + xm;
 
-			if (checked && !ignoreCheckMark) {
+			if (checkable && !ignoreCheckMark) {
 				const qreal boxMargin = 3.5;
 				const qreal boxWidth = checkcol - 2 * boxMargin;
 				const int checkColHOffset = windowsItemHMargin + windowsItemFrame - 1;
@@ -2866,7 +2888,7 @@ QSize DarkStyle::sizeFromContents(ContentsType type, const QStyleOption *option,
 			if (menuItem->text.contains(QLatin1Char('\t')))
 				w += tabSpacing;
 			else if (menuItem->menuItemType == QStyleOptionMenuItem::SubMenu)
-				w += 2 * QStyleHelper::dpiScaled(menuArrowHMargin, option);
+				w += 2 * DarkStyleHelper::dpiScaled(menuArrowHMargin, option);
 			else if (menuItem->menuItemType == QStyleOptionMenuItem::DefaultItem) {
 				QFontMetrics fm(menuItem->font);
 				QFont fontBold = menuItem->font;
@@ -2874,10 +2896,10 @@ QSize DarkStyle::sizeFromContents(ContentsType type, const QStyleOption *option,
 				QFontMetrics fmBold(fontBold);
 				w += fmBold.horizontalAdvance(menuItem->text) - fm.horizontalAdvance(menuItem->text);
 			}
-			const qreal dpi = QStyleHelper::dpi(option);
-			const int checkcol = qMax<int>(maxpmw, QStyleHelper::dpiScaled(menuCheckMarkWidth, dpi)); // Windows always shows a check column
+			const qreal dpi = DarkStyleHelper::dpi(option);
+			const int checkcol = qMax<int>(maxpmw, DarkStyleHelper::dpiScaled(menuCheckMarkWidth, dpi)); // Windows always shows a check column
 			w += checkcol;
-			w += QStyleHelper::dpiScaled(int(menuRightBorder) + 10, dpi);
+			w += DarkStyleHelper::dpiScaled(int(menuRightBorder) + 10, dpi);
 			newSize.setWidth(w);
 			if (menuItem->menuItemType == QStyleOptionMenuItem::Separator) {
 				if (!menuItem->text.isEmpty()) {
@@ -2889,8 +2911,8 @@ QSize DarkStyle::sizeFromContents(ContentsType type, const QStyleOption *option,
 					newSize.setHeight(qMax(combo->iconSize().height() + 2, newSize.height()));
 				}
 			}
-			newSize.setWidth(newSize.width() + int(QStyleHelper::dpiScaled(12, dpi)));
-			newSize.setWidth(qMax<int>(newSize.width(), int(QStyleHelper::dpiScaled(120, dpi))));
+			newSize.setWidth(newSize.width() + int(DarkStyleHelper::dpiScaled(12, dpi)));
+			newSize.setWidth(qMax<int>(newSize.width(), int(DarkStyleHelper::dpiScaled(120, dpi))));
 		}
 		break;
 	case CT_SizeGrip:

@@ -54,7 +54,7 @@
 #include <qwindow.h>
 
 #include <qmetaobject.h>
-//#include "qstylehelper_p.h"
+//#include "DarkStyleHelper_p.h"
 #include <qstringbuilder.h>
 
 #include <QGuiApplication>
@@ -75,7 +75,7 @@ class QPixmap;
 class QStyleOptionSlider;
 class QStyleOption;
 
-namespace QStyleHelper
+namespace DarkStyleHelper
 {
 	QString uniqueName(const QString &key, const QStyleOption *option, const QSize &size);
 	qreal dpiScaled(qreal value);
@@ -124,7 +124,7 @@ template <typename T>
 
 QT_END_NAMESPACE
 
-namespace QStyleHelper {
+namespace DarkStyleHelper {
 
 QString uniqueName(const QString &key, const QStyleOption *option, const QSize &size)
 {
@@ -161,7 +161,7 @@ inline QImage styleCacheImage(const QSize &size)
 	QPixmap internalPixmapCache; \
 	QImage imageCache; \
 	QPainter *p = painter; \
-	QString unique = QStyleHelper::uniqueName((a), option, option->rect.size()); \
+	QString unique = DarkStyleHelper::uniqueName((a), option, option->rect.size()); \
 	int txType = painter->deviceTransform().type() | painter->worldTransform().type(); \
 	bool doPixmapCache = (!option->rect.isEmpty()) \
 			&& ((txType <= QTransform::TxTranslate) || (painter->deviceTransform().type() == QTransform::TxScale)); \
@@ -283,7 +283,7 @@ static QPointF calcRadialPos(const QStyleOptionSlider *dial, qreal offset)
             / (dial->maximum - dial->minimum)) / 6;
     qreal xc = width / 2.0;
     qreal yc = height / 2.0;
-    qreal len = r - QStyleHelper::calcBigLineSize(r) - 3;
+	qreal len = r - DarkStyleHelper::calcBigLineSize(r) - 3;
     qreal back = offset * len;
 	QPointF pos(QPointF(xc + back * cos(a), yc - back * sin(a)));
     return pos;
@@ -382,7 +382,7 @@ void drawDial(const QStyleOptionSlider *option, QPainter *painter)
     // Draw notches
     if (option->subControls & QStyle::SC_DialTickmarks) {
         painter->setPen(option->palette.dark().color().darker(120));
-        painter->drawLines(QStyleHelper::calcLines(option));
+		painter->drawLines(DarkStyleHelper::calcLines(option));
     }
 
     // setting color before BEGIN_STYLE_PIXMAPCACHE since

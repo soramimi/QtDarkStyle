@@ -2,8 +2,6 @@
 #define DARKSTYLE_H
 
 #include <QCommonStyle>
-#include <QPainter>
-#include <QProxyStyle>
 
 class QStyleOptionViewItem;
 
@@ -45,6 +43,7 @@ private:
 	void drawMenuBarBG(QPainter *p, const QStyleOption *option, const QWidget *widget) const;
 	QColor color(int level, int alpha = 255) const;
 	void drawItemViewText(QPainter *p, const QStyleOptionViewItem *option, const QRect &rect, bool abbreviation) const;
+	QRect indicatorRect(const QStyleOption *option, const QWidget *widget, const QRect &rect) const;
 public:
 	DarkStyle(const QColor &base_color = QColor());
 	~DarkStyle() override;
