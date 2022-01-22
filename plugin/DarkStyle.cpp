@@ -1836,8 +1836,8 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			int y2 = r2.bottom();
 			const bool visible1 = firstTab || selected || onlyOne || !previousSelected;
 			const bool visible2 = lastTab || selected || onlyOne || !nextSelected;
-			const int adjust1 = ((onlyOne || firstTab) && selected && leftAligned) ? 0 : 1;
-			const int adjust2 = ((onlyOne || lastTab) && selected && rightAligned) ? 0 : 1;
+			const int adjust1 = 1 + (((onlyOne || firstTab) && selected && leftAligned) ? 0 : 1);
+			const int adjust2 = 1 + (((onlyOne || lastTab) && selected && rightAligned) ? 0 : 1);
 			switch (o->shape) {
 			default:
 				QCommonStyle::drawControl(ce, o, p, widget);
@@ -1875,7 +1875,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					// Left
 					if (visible1) {
 						p->setPen(light);
-						p->drawLine(x1, y1 + 2, x1, y2 - 2 - adjust1);
+						p->drawLine(x1, y1 + 2, x1, y2 - adjust1);
 						p->drawPoint(x1 + 1, y1 + 1);
 					}
 					// Top
@@ -1890,7 +1890,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					// Right
 					if (visible2) {
 						p->setPen(shadow);
-						p->drawLine(x2, y1 + 2, x2, y2 - 2 - adjust2);
+						p->drawLine(x2, y1 + 2, x2, y2 - adjust2);
 						p->drawPoint(x2 - 1, y1 + 1);
 					}
 				}
@@ -1926,7 +1926,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					// Top
 					if (visible1) {
 						p->setPen(light);
-						p->drawLine(x1 + 2, y1, x2 - 2 - adjust1, y1);
+						p->drawLine(x1 + 2, y1, x2 - adjust1, y1);
 						p->drawPoint(x1 + 1, y1 + 1);
 					}
 					// Left
@@ -1941,7 +1941,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					// Bottom
 					if (visible2) {
 						p->setPen(shadow);
-						p->drawLine(x1 + 2, y2, x2 - 2 - adjust2, y2);
+						p->drawLine(x1 + 2, y2, x2 - adjust2, y2);
 						p->drawPoint(x1 + 1, y2 - 1);
 					}
 				}
@@ -1980,7 +1980,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					// Left
 					if (visible1) {
 						p->setPen(light);
-						p->drawLine(x1, y2 - 2, x1, y1 + 2 + adjust1);
+						p->drawLine(x1, y2 - 2, x1, y1 + adjust1);
 						p->drawPoint(x1 + 1, y2 - 1);
 					}
 					// Bottom
@@ -1995,7 +1995,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					// Right
 					if (visible2) {
 						p->setPen(shadow);
-						p->drawLine(x2, y2 - 2, x2, y1 + 2 + adjust2);
+						p->drawLine(x2, y2 - 2, x2, y1 + adjust2);
 						p->drawPoint(x2 - 1, y2 - 1);
 					}
 				}
@@ -2033,7 +2033,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					// Top
 					if (visible1) {
 						p->setPen(light);
-						p->drawLine(x2 - 2, y1, x1 + 2 + adjust1, y1);
+						p->drawLine(x2 - 2, y1, x1 + adjust1, y1);
 						p->drawPoint(x2 - 1, y1 + 1);
 					}
 					// Right
@@ -2048,7 +2048,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					// Bottom
 					if (visible2) {
 						p->setPen(shadow);
-						p->drawLine(x2 - 2, y2, x1 + 2 + adjust2, y2);
+						p->drawLine(x2 - 2, y2, x1 + adjust2, y2);
 						p->drawPoint(x2 - 1, y2 - 1);
 					}
 				}
