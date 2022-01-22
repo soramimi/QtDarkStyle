@@ -1014,7 +1014,7 @@ void DarkStyle::drawItemViewText(QPainter *p, const QStyleOptionViewItem *option
 		if (n > 1) {
 			QFontMetrics fm = p->fontMetrics();
 			int w = rect.width();
-			while (1) {
+			while (n > 1) {
 				if (fm.size(0, text).width() <= w) break;
 				n--;
 				text = text.mid(0, n);
