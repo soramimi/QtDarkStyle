@@ -72,6 +72,26 @@ void drawShadePanel(QPainter *p, QRect const &rect, QPalette const &palette, QSt
 	drawFrame(p, rect, topleft, bottomright);
 }
 
+void drawShadeEllipse(QPainter *p, QRect const &rect, QPalette const &palette, QStyle::State state)
+{
+	QColor topleft;
+	QColor bottomright;
+	if (state & QStyle::State_Raised) {
+		topleft = palette.color(QPalette::Light);
+		bottomright = palette.color(QPalette::Shadow);
+	} else if (state & QStyle::State_Sunken) {
+		topleft = palette.color(QPalette::Shadow);
+		bottomright = palette.color(QPalette::Light);
+	}
+	p->save();
+	p->setRenderHint(QPainter::Antialiasing);
+	p->setPen(topleft);
+	p->drawArc(rect, 45 * 16, 180 * 16);
+	p->setPen(bottomright);
+	p->drawArc(rect, 225 * 16, 180 * 16);
+	p->restore();
+}
+
 void drawTabFrame(QPainter *p, const QRect &rect, const QPalette &palette)
 {
 	p->save();
@@ -1305,9 +1325,11 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 	if (pe == PE_IndicatorRadioButton) {
 		QRect ir = option->rect;
 		p->setPen(option->palette.dark().color());
-		p->drawArc(option->rect, 0, 5760);
+//		p->drawArc(option->rect, 0, 5760);
+		drawShadeEllipse(p, option->rect, option->palette, QStyle::State_Sunken);
 		if (option->state & (State_Sunken | State_On)) {
-			ir.adjust(2, 2, -2, -2);
+			ir.adjust(2, 2, -3, -3);
+			p->setRenderHint(QPainter::Antialiasing);
 			p->setBrush(option->palette.windowText());
 			bool oldQt4CompatiblePainting = p->testRenderHint(QPainter::Qt4CompatiblePainting);
 			p->setRenderHint(QPainter::Qt4CompatiblePainting);
@@ -1812,6 +1834,10 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			int x2 = r2.right();
 			int y1 = r2.top();
 			int y2 = r2.bottom();
+			const bool visible1 = firstTab || selected || onlyOne || !previousSelected;
+			const bool visible2 = lastTab || selected || onlyOne || !nextSelected;
+			const int adjust1 = ((onlyOne || firstTab) && selected && leftAligned) ? 0 : 1;
+			const int adjust2 = ((onlyOne || lastTab) && selected && rightAligned) ? 0 : 1;
 			switch (o->shape) {
 			default:
 				QCommonStyle::drawControl(ce, o, p, widget);
@@ -1831,10 +1857,9 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					if (selected) {
 						y2 += 1;
 					} else {
-						y2 += 1;
 						y1 += 2;
-						x1 += onlyOne || firstTab ? 1 : 0;
-						x2 -= onlyOne || lastTab ? 1 : 0;
+						if (onlyOne || firstTab) x1++;
+						if (onlyOne || lastTab)  x2--;
 					}
 
 #endif
@@ -1848,22 +1873,24 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						p->fillRect(r, o->palette.background());
 					}
 					// Left
-					if (firstTab || selected || onlyOne || !previousSelected) {
+					if (visible1) {
 						p->setPen(light);
-						p->drawLine(x1, y1 + 2, x1, y2 - 2 - (((onlyOne || firstTab) && selected && leftAligned) ? 0 : 1));
+						p->drawLine(x1, y1 + 2, x1, y2 - 2 - adjust1);
 						p->drawPoint(x1 + 1, y1 + 1);
 					}
 					// Top
 					{
-						int beg = x1 + (previousSelected ? 0 : 2);
-						int end = x2 - (nextSelected ? 0 : 2);
+						int beg = x1;
+						int end = x2;
+						if (!previousSelected) beg += 2;
+						if (!nextSelected) end -= 2;
 						p->setPen(light);
 						p->drawLine(beg, y1, end, y1);
 					}
 					// Right
-					if (lastTab || selected || onlyOne || !nextSelected) {
+					if (visible2) {
 						p->setPen(shadow);
-						p->drawLine(x2, y1 + 2, x2, y2 - 2 - (((onlyOne || lastTab) && selected && rightAligned) ? 0 : 1));
+						p->drawLine(x2, y1 + 2, x2, y2 - 2 - adjust2);
 						p->drawPoint(x2 - 1, y1 + 1);
 					}
 				}
@@ -1883,8 +1910,8 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						x2 += 1;
 					} else {
 						x1 += 2;
-						y1 += firstTab ? 1 : 0;
-						y2 -= lastTab ? 1 : 0;
+						if (onlyOne || firstTab) y1++;
+						if (onlyOne || lastTab)  y2--;
 					}
 #endif
 
@@ -1897,22 +1924,24 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						p->fillRect(r, o->palette.background());
 					}
 					// Top
-					if (firstTab || selected || onlyOne || !previousSelected) {
+					if (visible1) {
 						p->setPen(light);
-						p->drawLine(x1 + 2, y1, x2 - 2 - (((onlyOne || firstTab) && selected && leftAligned) ? 0 : 1), y1);
+						p->drawLine(x1 + 2, y1, x2 - 2 - adjust1, y1);
 						p->drawPoint(x1 + 1, y1 + 1);
 					}
 					// Left
 					{
-						int beg = y1 + (previousSelected ? 0 : 2);
-						int end = y2 - (nextSelected ? 0 : 2);
+						int beg = y1;
+						int end = y2;
+						if (!previousSelected) beg += 2;
+						if (!nextSelected) end -= 2;
 						p->setPen(light);
 						p->drawLine(x1, beg, x1, end);
 					}
 					// Bottom
-					if (lastTab || selected || onlyOne || !nextSelected) {
+					if (visible2) {
 						p->setPen(shadow);
-						p->drawLine(x1 + 2, y2, x2 - 2 - (((onlyOne || lastTab) && selected && rightAligned) ? 0 : 1), y2);
+						p->drawLine(x1 + 2, y2, x2 - 2 - adjust2, y2);
 						p->drawPoint(x1 + 1, y2 - 1);
 					}
 				}
@@ -1933,10 +1962,9 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					if (selected) {
 						y1 -= 1;
 					} else {
-						y1 -= 1;
 						y2 -= 2;
-						x1 += onlyOne || firstTab ? 1 : 0;
-						x2 -= onlyOne || lastTab ? 1 : 0;
+						if (onlyOne || firstTab) x1++;
+						if (onlyOne || lastTab)  x2--;
 					}
 #endif
 
@@ -1950,22 +1978,24 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					}
 
 					// Left
-					if (firstTab || selected || onlyOne || !previousSelected) {
+					if (visible1) {
 						p->setPen(light);
-						p->drawLine(x1, y2 - 2, x1, y1 + 2 + (((onlyOne || firstTab) && selected && leftAligned) ? 0 : 1));
+						p->drawLine(x1, y2 - 2, x1, y1 + 2 + adjust1);
 						p->drawPoint(x1 + 1, y2 - 1);
 					}
 					// Bottom
 					{
-						int beg = x1 + (previousSelected ? 0 : 2);
-						int end = x2 - (nextSelected ? 0 : 2);
+						int beg = x1;
+						int end = x2;
+						if (!previousSelected) beg += 2;
+						if (!nextSelected) end -= 2;
 						p->setPen(shadow);
 						p->drawLine(beg, y2, end, y2);
 					}
 					// Right
-					if (lastTab || selected || onlyOne || !nextSelected) {
+					if (visible2) {
 						p->setPen(shadow);
-						p->drawLine(x2, y2 - 2, x2, y1 + 2 + (((onlyOne || lastTab) && selected && rightAligned) ? 0 : 1));
+						p->drawLine(x2, y2 - 2, x2, y1 + 2 + adjust2);
 						p->drawPoint(x2 - 1, y2 - 1);
 					}
 				}
@@ -1986,10 +2016,9 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					if (selected) {
 						x1 -= 1;
 					} else {
-						x1 -= 1;
 						x2 -= 2;
-						y1 += onlyOne || firstTab ? 1 : 0;
-						y2 -= onlyOne || lastTab ? 1 : 0;
+						if (onlyOne || firstTab) y1++;
+						if (onlyOne || lastTab)  y2--;
 					}
 #endif
 
@@ -2002,22 +2031,24 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						p->fillRect(r, o->palette.background());
 					}
 					// Top
-					if (firstTab || selected || onlyOne || !previousSelected) {
+					if (visible1) {
 						p->setPen(light);
-						p->drawLine(x2 - 2, y1, x1 + 2 + (((onlyOne || firstTab) && selected && leftAligned) ? 0 : 1), y1);
+						p->drawLine(x2 - 2, y1, x1 + 2 + adjust1, y1);
 						p->drawPoint(x2 - 1, y1 + 1);
 					}
 					// Right
 					{
-						int beg = y1 + (previousSelected ? 0 : 2);
-						int end = y2 - (nextSelected ? 0 : 2);
+						int beg = y1;
+						int end = y2;
+						if (!previousSelected) beg += 2;
+						if (!nextSelected) end -= 2;
 						p->setPen(shadow);
 						p->drawLine(x2, beg, x2, end);
 					}
 					// Bottom
-					if (lastTab || selected || onlyOne || !nextSelected) {
+					if (visible2) {
 						p->setPen(shadow);
-						p->drawLine(x2 - 2, y2, x1 + 2 + (((onlyOne || lastTab) && selected && rightAligned) ? 0 : 1), y2);
+						p->drawLine(x2 - 2, y2, x1 + 2 + adjust2, y2);
 						p->drawPoint(x2 - 1, y2 - 1);
 					}
 				}
