@@ -2,7 +2,6 @@
 #define DARKSTYLE_H
 
 #include <QCommonStyle>
-#include <QProxyStyle>
 
 class QStyleOptionViewItem;
 
@@ -45,11 +44,16 @@ private:
 	QColor color(int level, int alpha = 255) const;
 	void drawItemViewText(QPainter *p, const QStyleOptionViewItem *option, const QRect &rect, bool abbreviation) const;
 	QRect indicatorRect(const QStyleOption *option, const QWidget *widget, const QRect &rect) const;
+	qreal dpiScaled(qreal value, qreal dpi) const;
+	qreal dpiScaled(qreal value, const QPaintDevice *device) const;
+	qreal dpiScaled(qreal value, const QStyleOption *option) const;
 public:
 	DarkStyle(const QColor &base_color = QColor());
 	~DarkStyle() override;
 
-	QColor getBaseColor();
+	bool isDpiScalingEnabled() const;
+
+	QColor baseColor() const;
 	void setBaseColor(const QColor &color);
 	void setScrollBarExtent(int n);
 
@@ -61,6 +65,8 @@ public:
 	void drawPrimitive(PrimitiveElement pe, const QStyleOption *option, QPainter *p, const QWidget *widget) const override;
 	void drawControl(ControlElement ce, const QStyleOption *option, QPainter *p, const QWidget *widget) const override;
 	void drawComplexControl(ComplexControl cc, const QStyleOptionComplex *option, QPainter *p, const QWidget *widget) const override;
+
+	void setDpiScalingEnabled(bool f);
 };
 
 #endif // DARKSTYLE_H

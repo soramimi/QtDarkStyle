@@ -1,6 +1,7 @@
 #include "DarkStyle.h"
 #include "NinePatch.h"
 #include "TraditionalWindowsStyleTreeControl.h"
+#include <QApplication>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QInputDialog>
@@ -159,12 +160,14 @@ struct DarkStyle::Private {
 
 	TraditionalWindowsStyleTreeControl legacy_windows;
 
+	bool dpi_scaling_enabled = true;
 };
 
 DarkStyle::DarkStyle(QColor const &base_color)
 	: m(new Private)
 {
-//	setBaseColor(base_color);
+	setBaseColor(base_color);
+	setDpiScalingEnabled(QApplication::testAttribute(Qt::AA_EnableHighDpiScaling));
 }
 
 DarkStyle::~DarkStyle()
@@ -172,10 +175,32 @@ DarkStyle::~DarkStyle()
 	delete m;
 }
 
+void DarkStyle::setDpiScalingEnabled(bool f)
+{
+	m->dpi_scaling_enabled = f;
+}
 
+bool DarkStyle::isDpiScalingEnabled() const
+{
+	return m->dpi_scaling_enabled;
+}
 
+qreal DarkStyle::dpiScaled(qreal value, qreal dpi) const
+{
+	return DarkStyleHelper::dpiScaled(value, dpi);
+}
 
-QColor DarkStyle::getBaseColor()
+qreal DarkStyle::dpiScaled(qreal value, const QPaintDevice *device) const
+{
+	return DarkStyleHelper::dpiScaled(value, device);
+}
+
+qreal DarkStyle::dpiScaled(qreal value, const QStyleOption *option) const
+{
+	return DarkStyleHelper::dpiScaled(value, option);
+}
+
+QColor DarkStyle::baseColor() const
 {
 	return m->base_color;
 }
@@ -188,7 +213,7 @@ void DarkStyle::setBaseColor(QColor const &color)
 
 QColor DarkStyle::color(int level, int alpha) const
 {
-	QColor c = m->base_color.lighter(level * 100 / 255);
+	QColor c = baseColor().lighter(level * 100 / 255);
 	c.setAlpha(alpha);
 	return c;
 }
@@ -317,7 +342,7 @@ void DarkStyle::loadImages()
 {
 	if (m->images_loaded) return;
 
-	if (!m->base_color.isValid()) {
+	if (!baseColor().isValid()) {
 		setBaseColor(Qt::white);
 	}
 
@@ -344,7 +369,7 @@ void DarkStyle::loadImages()
 
 QPixmap DarkStyle::pixmapFromImage(const QImage &image, QSize size) const
 {
-	QString key = pixmapkey(image.text("name"), image.text("role"), size, m->base_color);
+	QString key = pixmapkey(image.text("name"), image.text("role"), size, baseColor());
 
 	QPixmap *pm = QPixmapCache::find(key);
 	if (pm) return *pm;
@@ -358,17 +383,7 @@ QPixmap DarkStyle::pixmapFromImage(const QImage &image, QSize size) const
 
 QColor DarkStyle::selectionColor() const
 {
-	//	return QColor(128, 192, 255);
 	return QColor(80, 160, 255);
-}
-
-QColor DarkStyle::colorForItemView(QStyleOption const *opt) const
-{
-#ifdef Q_OS_WIN
-	return opt->palette.color(QPalette::Base);
-#else
-	return opt->palette.color(QPalette::Dark);
-#endif
 }
 
 void DarkStyle::drawNinePatchImage(QPainter *p, const QImage &image, const QRect &r, int w, int h) const
@@ -382,8 +397,7 @@ void DarkStyle::drawNinePatchImage(QPainter *p, const QImage &image, const QRect
 
 void DarkStyle::polish(QPalette &palette)
 {
-//		return QProxyStyle::polish(palette);
-	if (!m->base_color.isValid()) {
+	if (!baseColor().isValid()) {
 		setBaseColor(Qt::white);
 	}
 	loadImages();
@@ -635,16 +649,6 @@ void DarkStyle::drawMenuBarBG(QPainter *p, const QStyleOption *option, QWidget c
 
 int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
-	//	return QProxyStyle::pixelMetric(metric, option, widget);
-	if (metric == PM_ScrollBarExtent) {
-		if (m->scroll_bar_extent > 0) {
-			return m->scroll_bar_extent;
-		}
-	}
-	if (metric == PM_SliderLength) {
-		return std::min(widget->width(), widget->height());
-	}
-	//	return QCommonStyle::pixelMetric(metric, option, widget);
 	int val = -1;
 	switch (metric) {
 	case PM_SliderTickmarkOffset:
@@ -673,10 +677,16 @@ int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const
 		val = 24;
 		break;
 	case PM_ScrollBarExtent:
+		if (m->scroll_bar_extent > 0) {
+			return m->scroll_bar_extent;
+		}
 		val = 16;
 		break;
-	case PM_SliderThickness:
 	case PM_SliderLength:
+		val = std::min(widget->width(), widget->height());
+		return val; // Do not dpi-scale
+//		break;
+	case PM_SliderThickness:
 		val = 15;
 		break;
 	case PM_DockWidgetTitleMargin:
@@ -759,8 +769,11 @@ int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const
 	default:
 		return QCommonStyle::pixelMetric(metric, option, widget);
 	}
-	return DarkStyleHelper::dpiScaled(val, option);
-	//	return val;
+	if (isDpiScalingEnabled()) {
+		return dpiScaled(val, option);
+	} else {
+		return val;
+	}
 }
 
 QRect DarkStyle::indicatorRect(const QStyleOption *option, const QWidget *widget, QRect const &rect) const
@@ -781,7 +794,6 @@ QRect DarkStyle::indicatorRect(const QStyleOption *option, const QWidget *widget
 
 QRect DarkStyle::subControlRect(ComplexControl cc, const QStyleOptionComplex *option, SubControl sc, const QWidget *widget) const
 {
-	//	return QProxyStyle::subControlRect(cc, option, sc, widget);
 	if (cc == CC_Slider && sc == SC_SliderGroove) {
 		return widget->rect();
 	}
@@ -887,8 +899,6 @@ QRect DarkStyle::subControlRect(ComplexControl cc, const QStyleOptionComplex *op
 
 int DarkStyle::styleHint(QStyle::StyleHint hint, const QStyleOption *option, const QWidget *widget, QStyleHintReturn *returnData) const
 {
-	//	return QProxyStyle::styleHint(hint, option, widget, returnData);
-
 	switch (hint) {
 	case SH_Slider_SnapToValue:
 	case SH_PrintDialog_RightAlignButtons:
@@ -1071,8 +1081,6 @@ void DarkStyle::drawItemViewText(QPainter *p, const QStyleOptionViewItem *option
 
 void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, QPainter *p, const QWidget *widget) const
 {
-	//	return QProxyStyle::drawPrimitive(pe, option, p, widget);
-
 #ifndef Q_OS_MAC
 	if (pe == PE_FrameFocusRect) {
 		//		if (auto const *w = qobject_cast<QTableView const *>(widget)) {
@@ -1189,27 +1197,14 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 			int y = o->rect.y();
 			int w = o->rect.width();
 			int h = o->rect.height();
-#if 0//def Q_OS_WIN
-			switch (o->shape) {
-			case QTabBar::RoundedNorth:
-				break;
-			case QTabBar::RoundedSouth:
-				h -= 1;
-				break;
-			case QTabBar::RoundedWest:
-				break;
-			case QTabBar::RoundedEast:
-				w -= 2;
-				break;
-			}
-#endif
 			drawTabFrame(p, QRect(x, y, w, h), o->palette);
 			return;
 		}
 	}
 	if (pe == PE_PanelLineEdit) {
 		if (auto const *panel = qstyleoption_cast<QStyleOptionFrame const *>(option)) {
-			p->fillRect(option->rect, colorForItemView(option));
+			QColor color = option->palette.color(QPalette::Dark);
+			p->fillRect(option->rect, color);
 			if (panel->lineWidth > 0) {
 				drawFrame(p, option->rect, option->palette.color(QPalette::Shadow), option->palette.color(QPalette::Light));
 			}
@@ -1230,13 +1225,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 		return;
 	}
 	if (pe == PE_PanelItemViewRow) {
-		//		p->drawEllipse(option->rect);
-		//		return;
-#ifdef Q_OS_WIN
-		// thru
-#else
 		return;
-#endif
 	}
 	if (pe == PE_PanelItemViewItem) {
 		//		p->fillRect(option->rect, colorForItemView(option)); // 選択枠を透過描画させるので背景は描かない
@@ -1369,8 +1358,6 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 
 void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPainter *p, const QWidget *widget) const
 {
-	//	return QProxyStyle::drawControl(ce, option, p, widget);
-
 	bool disabled = !(option->state & State_Enabled);
 #ifdef Q_OS_MAC
 	if (ce == CE_ToolBar) {
@@ -1871,16 +1858,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				break;
 			case QTabBar::RoundedNorth:
 				{
-#if 0;//def Q_OS_WIN
-					if (selected) {
-						y2 += 2;
-					} else {
-						y2 += 1;
-						y1 += 2;
-						x1 += onlyOne || firstTab ? borderThinkness : 0;
-						x2 -= onlyOne || lastTab ? borderThinkness : 0;
-					}
-#elif 1
 					if (selected) {
 						y2 += 1;
 					} else {
@@ -1889,7 +1866,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						if (onlyOne || lastTab)  x2--;
 					}
 
-#endif
 
 					// tab panel bg
 					{
@@ -1924,15 +1900,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				break;
 			case QTabBar::RoundedWest:
 				{
-#if 0;//def Q_OS_WIN
-					if (selected) {
-						x2 += 1;
-					} else {
-						x1 += 2;
-						y1 += firstTab ? borderThinkness : 0;
-						y2 -= lastTab ? borderThinkness : 0;
-					}
-#elif 1
 					if (selected) {
 						x2 += 1;
 					} else {
@@ -1940,7 +1907,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						if (onlyOne || firstTab) y1++;
 						if (onlyOne || lastTab)  y2--;
 					}
-#endif
 
 					// tab panel bg
 					{
@@ -1975,17 +1941,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				break;
 			case QTabBar::RoundedSouth:
 				{
-#if 0;//def Q_OS_WIN
-					if (selected) {
-						y1 -= 2;
-					} else {
-						x1 -= 1;
-						y1 -= 1;
-						y2 -= 2;
-						x1 += firstTab ? borderThinkness : 0;
-						x2 -= lastTab ? borderThinkness : 0;
-					}
-#elif 1
 					if (selected) {
 						y1 -= 1;
 					} else {
@@ -1993,7 +1948,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						if (onlyOne || firstTab) x1++;
 						if (onlyOne || lastTab)  x2--;
 					}
-#endif
 
 					// tab panel bg
 					{
@@ -2029,17 +1983,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				break;
 			case QTabBar::RoundedEast:
 				{
-#if 0;//def Q_OS_WIN
-					if (selected) {
-						x1 -= 2;
-					} else {
-						y1 -= 2;
-						x1 -= 1;
-						x2 -= 2;
-						y1 += firstTab ? borderThinkness : 0;
-						y2 -= lastTab ? borderThinkness : 0;
-					}
-#elif 1
 					if (selected) {
 						x1 -= 1;
 					} else {
@@ -2047,7 +1990,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						if (onlyOne || firstTab) y1++;
 						if (onlyOne || lastTab)  y2--;
 					}
-#endif
 
 					// tab panel bg
 					{
@@ -2132,7 +2074,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 			}
 			QPixmap pm;
 			QSize size(w, h);
-			key = pixmapkey("progress_bar", key, size, m->base_color);
+			key = pixmapkey("progress_bar", key, size, baseColor());
 			if (!QPixmapCache::find(key, &pm)) {
 				QImage im = image->scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 				pm = QPixmap::fromImage(im);
@@ -2403,8 +2345,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 
 void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex *option, QPainter *p, const QWidget *widget) const
 {
-	//	return QProxyStyle::drawComplexControl(cc, option, p, widget);
-
 	if (cc == QStyle::CC_ComboBox) {
 		if (auto const *o = qstyleoption_cast<QStyleOptionComboBox const *>(option)) {
 			SubControls sub = option->subControls;
@@ -2692,7 +2632,7 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 
 			if ((option->subControls & SC_SliderGroove) && groove.isValid()) {
 				QRect rect(0, 0, groove.width(), groove.height());
-				QString key = pixmapkey("slider_groove", horizontal ? "horz" : "vert", rect.size(), m->base_color);
+				QString key = pixmapkey("slider_groove", horizontal ? "horz" : "vert", rect.size(), baseColor());
 
 				QRectF grooveRect;
 				double r = std::min(groove.width(), groove.height()) / 2.0;
@@ -2786,7 +2726,7 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 				QRect r = pixmapRect.adjusted(0, 0, -1, -1);
 				QPainterPath path;
 				path.addEllipse(r);
-				QString handlePixmapName = pixmapkey(QLatin1String("slider_handle"), "", handle.size(), m->base_color);
+				QString handlePixmapName = pixmapkey(QLatin1String("slider_handle"), "", handle.size(), baseColor());
 				if (!QPixmapCache::find(handlePixmapName, cache)) {
 					cache = QPixmap(handle.size());
 					cache.fill(Qt::transparent);
@@ -2893,7 +2833,7 @@ QSize DarkStyle::sizeFromContents(ContentsType type, const QStyleOption *option,
 			if (menuItem->text.contains(QLatin1Char('\t')))
 				w += tabSpacing;
 			else if (menuItem->menuItemType == QStyleOptionMenuItem::SubMenu)
-				w += 2 * DarkStyleHelper::dpiScaled(menuArrowHMargin, option);
+				w += 2 * dpiScaled(menuArrowHMargin, option);
 			else if (menuItem->menuItemType == QStyleOptionMenuItem::DefaultItem) {
 				QFontMetrics fm(menuItem->font);
 				QFont fontBold = menuItem->font;
@@ -2902,9 +2842,9 @@ QSize DarkStyle::sizeFromContents(ContentsType type, const QStyleOption *option,
 				w += fmBold.horizontalAdvance(menuItem->text) - fm.horizontalAdvance(menuItem->text);
 			}
 			const qreal dpi = DarkStyleHelper::dpi(option);
-			const int checkcol = qMax<int>(maxpmw, DarkStyleHelper::dpiScaled(menuCheckMarkWidth, dpi)); // Windows always shows a check column
+			const int checkcol = qMax<int>(maxpmw, dpiScaled(menuCheckMarkWidth, dpi)); // Windows always shows a check column
 			w += checkcol;
-			w += DarkStyleHelper::dpiScaled(int(menuRightBorder) + 10, dpi);
+			w += dpiScaled(int(menuRightBorder) + 10, dpi);
 			newSize.setWidth(w);
 			if (menuItem->menuItemType == QStyleOptionMenuItem::Separator) {
 				if (!menuItem->text.isEmpty()) {
@@ -2916,8 +2856,8 @@ QSize DarkStyle::sizeFromContents(ContentsType type, const QStyleOption *option,
 					newSize.setHeight(qMax(combo->iconSize().height() + 2, newSize.height()));
 				}
 			}
-			newSize.setWidth(newSize.width() + int(DarkStyleHelper::dpiScaled(12, dpi)));
-			newSize.setWidth(qMax<int>(newSize.width(), int(DarkStyleHelper::dpiScaled(120, dpi))));
+			newSize.setWidth(newSize.width() + int(dpiScaled(12, dpi)));
+			newSize.setWidth(qMax<int>(newSize.width(), int(dpiScaled(120, dpi))));
 		}
 		break;
 	case CT_SizeGrip:

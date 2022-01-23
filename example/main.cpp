@@ -1,14 +1,16 @@
 #include "MainWindow.h"
 #include "MainWindow2.h"
+#include "../DarkStyleInterface.h"
 #include <QApplication>
 #include <QPluginLoader>
-#include "../DarkStyleInterface.h"
 #include <QProxyStyle>
 
 
 int main(int argc, char *argv[])
 {
-//	QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+	if (0) {
+		QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+	}
 	QApplication a(argc, argv);
 
 

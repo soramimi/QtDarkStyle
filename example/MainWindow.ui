@@ -21,7 +21,7 @@
        <string>Hello, world</string>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -207,7 +207,7 @@
             <rect>
              <x>170</x>
              <y>220</y>
-             <width>102</width>
+             <width>161</width>
              <height>19</height>
             </rect>
            </property>
@@ -220,7 +220,7 @@
             <rect>
              <x>170</x>
              <y>250</y>
-             <width>102</width>
+             <width>161</width>
              <height>19</height>
             </rect>
            </property>
@@ -233,7 +233,7 @@
             <rect>
              <x>170</x>
              <y>280</y>
-             <width>88</width>
+             <width>161</width>
              <height>19</height>
             </rect>
            </property>
@@ -246,7 +246,7 @@
             <rect>
              <x>170</x>
              <y>310</y>
-             <width>88</width>
+             <width>161</width>
              <height>19</height>
             </rect>
            </property>
