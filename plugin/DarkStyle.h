@@ -56,7 +56,9 @@ public:
 	QColor baseColor() const;
 	void setBaseColor(const QColor &color);
 	void setScrollBarExtent(int n);
+	void setDpiScalingEnabled(bool f);
 
+	QPalette standardPalette() const;
 	QSize sizeFromContents(ContentsType type, const QStyleOption *option, const QSize &size, const QWidget *widget) const override;
 	void polish(QPalette &palette) override;
 	int pixelMetric(PixelMetric metric, const QStyleOption *option = nullptr, const QWidget *widget = nullptr) const override;
@@ -66,7 +68,6 @@ public:
 	void drawControl(ControlElement ce, const QStyleOption *option, QPainter *p, const QWidget *widget) const override;
 	void drawComplexControl(ComplexControl cc, const QStyleOptionComplex *option, QPainter *p, const QWidget *widget) const override;
 
-	void setDpiScalingEnabled(bool f);
 };
 
 #endif // DARKSTYLE_H

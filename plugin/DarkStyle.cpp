@@ -161,6 +161,8 @@ struct DarkStyle::Private {
 	TraditionalWindowsStyleTreeControl legacy_windows;
 
 	bool dpi_scaling_enabled = true;
+
+	QPalette palette;
 };
 
 DarkStyle::DarkStyle(QColor const &base_color)
@@ -178,6 +180,11 @@ DarkStyle::~DarkStyle()
 void DarkStyle::setDpiScalingEnabled(bool f)
 {
 	m->dpi_scaling_enabled = f;
+}
+
+QPalette DarkStyle::standardPalette() const
+{
+	return m->palette;
 }
 
 bool DarkStyle::isDpiScalingEnabled() const
@@ -408,6 +415,7 @@ void DarkStyle::polish(QPalette &palette)
 #ifndef Q_OS_WIN
 	palette.setColor(QPalette::ToolTipText, Qt::black); // ツールチップの文字色
 #endif
+	m->palette = palette;
 }
 
 void DarkStyle::drawGutter(QPainter *p, const QRect &r) const
