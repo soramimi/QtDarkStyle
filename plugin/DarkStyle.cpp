@@ -46,7 +46,7 @@ void drawFrame(QPainter *pr, QRect const &r, QColor const &color_topleft, QColor
 	return drawFrame(pr, r.x(), r.y(), r.width(), r.height(), color_topleft, color_bottomright);
 }
 
-void drawShadePanel(QPainter *p, QRect const &rect, QPalette const &palette, QStyle::State state)
+void drawShadeFrame(QPainter *p, QRect const &rect, QPalette const &palette, QStyle::State state)
 {
 	QColor topleft;
 	QColor bottomright;
@@ -89,7 +89,7 @@ void drawTabFrame(QPainter *p, const QRect &rect, const QPalette &palette)
 	int h = rect.height();
 	p->setClipRect(x, y, w, h);
 	p->fillRect(x, y, w, h, palette.color(QPalette::Window));
-	drawShadePanel(p, rect, palette, QStyle::State_Raised);
+	drawShadeFrame(p, rect, palette, QStyle::State_Raised);
 	p->restore();
 }
 
@@ -164,13 +164,16 @@ struct DarkStyle::Private {
 DarkStyle::DarkStyle(QColor const &base_color)
 	: m(new Private)
 {
-	//	setBaseColor(base_color);
+//	setBaseColor(base_color);
 }
 
 DarkStyle::~DarkStyle()
 {
 	delete m;
 }
+
+
+
 
 QColor DarkStyle::getBaseColor()
 {
@@ -379,7 +382,7 @@ void DarkStyle::drawNinePatchImage(QPainter *p, const QImage &image, const QRect
 
 void DarkStyle::polish(QPalette &palette)
 {
-	//	return QProxyStyle::polish(palette);
+//		return QProxyStyle::polish(palette);
 	if (!m->base_color.isValid()) {
 		setBaseColor(Qt::white);
 	}
@@ -1323,7 +1326,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 			int x = rect.x();
 			int y = rect.y();
 			int extent = rect.height();
-			drawShadePanel(p, rect, option->palette, State_Sunken);
+			drawShadeFrame(p, rect, option->palette, State_Sunken);
 			if (option->state & (State_Sunken | State_On)) {
 				p->save();
 				p->translate(x + 2, y + 2);
@@ -1866,7 +1869,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				break;
 			case QTabBar::RoundedNorth:
 				{
-#ifdef Q_OS_WIN
+#if 0;//def Q_OS_WIN
 					if (selected) {
 						y2 += 2;
 					} else {
@@ -1919,7 +1922,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				break;
 			case QTabBar::RoundedWest:
 				{
-#ifdef Q_OS_WIN
+#if 0;//def Q_OS_WIN
 					if (selected) {
 						x2 += 1;
 					} else {
@@ -1970,7 +1973,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				break;
 			case QTabBar::RoundedSouth:
 				{
-#ifdef Q_OS_WIN
+#if 0;//def Q_OS_WIN
 					if (selected) {
 						y1 -= 2;
 					} else {
@@ -2024,7 +2027,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				break;
 			case QTabBar::RoundedEast:
 				{
-#ifdef Q_OS_WIN
+#if 0;//def Q_OS_WIN
 					if (selected) {
 						x1 -= 2;
 					} else {

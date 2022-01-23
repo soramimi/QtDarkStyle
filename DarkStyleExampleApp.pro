@@ -23,14 +23,17 @@ LIBS += -L$$PWD/_out/
 # -ldarkstyleplugin
 
 SOURCES += \
+        example/MainWindow2.cpp \
         example/main.cpp \
         example/MainWindow.cpp
 
 HEADERS += \
-        example/MainWindow.h
+        example/MainWindow.h \
+        example/MainWindow2.h
 
 FORMS += \
-        example/MainWindow.ui
+        example/MainWindow.ui \
+        example/MainWindow2.ui
 
 RESOURCES += \
     resources.qrc

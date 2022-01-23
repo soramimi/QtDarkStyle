@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "MainWindow2.h"
 #include <QApplication>
 #include <QPluginLoader>
 #include "../DarkStyleInterface.h"
@@ -19,7 +20,7 @@ int main(int argc, char *argv[])
 //		a.setStyle(plugin->createStandardStyle());
 	}
 
-	MainWindow w;
+	MainWindow2 w;
 	w.show();
 
 	return a.exec();

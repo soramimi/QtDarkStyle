@@ -59,7 +59,11 @@
 
 #include <QGuiApplication>
 #include <QScreen>
-#include <cmath>
+
+#ifdef _WIN32
+#define _USE_MATH_DEFINES
+#endif
+#include <math.h>
 
 #define Q_PI M_PI
 
@@ -191,7 +195,7 @@ static const qreal qstyleBaseDpi = 72;
 static const qreal qstyleBaseDpi = 96;
 #endif
 
-Q_WIDGETS_EXPORT qreal dpi(const QStyleOption *option)
+/*Q_WIDGETS_EXPORT*/ qreal dpi(const QStyleOption *option)
 {
 #ifndef Q_OS_DARWIN
     // Prioritize the application override, except for on macOS where
@@ -215,17 +219,17 @@ Q_WIDGETS_EXPORT qreal dpi(const QStyleOption *option)
 #endif
 }
 
-Q_WIDGETS_EXPORT qreal dpiScaled(qreal value, qreal dpi)
+/*Q_WIDGETS_EXPORT*/ qreal dpiScaled(qreal value, qreal dpi)
 {
     return value * dpi / qstyleBaseDpi;
 }
 
-Q_WIDGETS_EXPORT qreal dpiScaled(qreal value, const QPaintDevice *device)
+/*Q_WIDGETS_EXPORT*/ qreal dpiScaled(qreal value, const QPaintDevice *device)
 {
     return dpiScaled(value, device->logicalDpiX());
 }
 
-Q_WIDGETS_EXPORT qreal dpiScaled(qreal value, const QStyleOption *option)
+/*Q_WIDGETS_EXPORT*/ qreal dpiScaled(qreal value, const QStyleOption *option)
 {
     return dpiScaled(value, dpi(option));
 }
