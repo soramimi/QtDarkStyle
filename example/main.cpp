@@ -8,9 +8,9 @@
 
 int main(int argc, char *argv[])
 {
+	QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 	QApplication a(argc, argv);
 
-//	a.setAttribute(Qt::AA_EnableHighDpiScaling);
 
 	QPluginLoader loader("darkstyleplugin");
 
@@ -18,9 +18,12 @@ int main(int argc, char *argv[])
 	if (plugin) {
 		a.setStyle(plugin->createDarkStyle());
 //		a.setStyle(plugin->createStandardStyle());
+		a.setPalette(a.style()->standardPalette());
 	}
 
-	MainWindow2 w;
+
+	MainWindow w;
+	w.setStyle(a.style());
 	w.show();
 
 	return a.exec();
