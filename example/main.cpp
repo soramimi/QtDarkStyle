@@ -3,6 +3,7 @@
 #include "../DarkStyleInterface.h"
 #include <QApplication>
 #include <QPluginLoader>
+#include <QProgressBar>
 #include <QProxyStyle>
 
 
@@ -15,21 +16,18 @@ int main(int argc, char *argv[])
 
 	bool darkstyle = true;
 
-
+#if 1
 	QPluginLoader loader("darkstyleplugin");
 
 	DarkStyleInterface *plugin = dynamic_cast<DarkStyleInterface *>(loader.instance());
 	if (plugin) {
 		if (darkstyle) {
-			a.setStyle(plugin->createDarkStyle());
-			a.setPalette(a.style()->standardPalette());
+            plugin->applyDarkStyle(&a);
 		} else {
-			a.setStyle(plugin->createStandardStyle());
-#ifndef Q_OS_WIN
-			a.setPalette(a.style()->standardPalette());
-#endif
+            plugin->applyLightStyle(&a);
 		}
 	}
+#endif
 
 	MainWindow w;
 	w.setStyle(a.style());

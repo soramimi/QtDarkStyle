@@ -765,6 +765,11 @@ int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const
 		break;
 	case PM_IndicatorHeight:
 	case PM_IndicatorWidth:
+#ifdef Q_OS_WIN
+        val = 11;
+        break;
+#endif
+        // fallthru
 	case PM_ExclusiveIndicatorHeight:
 	case PM_ExclusiveIndicatorWidth:
 		val = 16;
@@ -1321,7 +1326,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 			int x = rect.x();
 			int y = rect.y();
 			int extent = rect.height();
-			drawShadeFrame(p, rect.adjusted(2, 2, -3, -3), option->palette, State_Sunken);
+			drawShadeFrame(p, rect, option->palette, State_Sunken);
 			if (option->state & (State_Sunken | State_On)) {
 				p->save();
 				p->translate(x + 2, y + 2);
@@ -1346,7 +1351,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 		return;
 	}
 	if (pe == PE_IndicatorRadioButton) {
-		QRect rect = indicatorRect(option, widget, option->rect).adjusted(2, 2, -3, -3);
+		QRect rect = indicatorRect(option, widget, option->rect);
 		p->setPen(option->palette.dark().color());
 		drawShadeEllipse(p, rect, option->palette, QStyle::State_Sunken);
 		if (option->state & (State_Sunken | State_On)) {
@@ -2032,12 +2037,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 
 			QColor color(0, 128, 255);
 
-			bool horz = true; //@ = (o->orientation == Qt::Horizontal);
-#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
-			horz = o->orientation == Qt::Horizontal;
-#else
-			horz = !o->bottomToTop;
-#endif
+			bool horz = o->state & QStyle::State_Horizontal;
 
 			QString key;
 			QImage const *image;
