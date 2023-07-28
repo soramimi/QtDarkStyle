@@ -766,7 +766,7 @@ int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const
 	case PM_IndicatorHeight:
 	case PM_IndicatorWidth:
 #ifdef Q_OS_WIN
-        val = 11;
+		val = 14;
         break;
 #endif
         // fallthru
