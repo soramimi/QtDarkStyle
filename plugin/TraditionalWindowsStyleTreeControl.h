@@ -8,6 +8,9 @@
 class QPainter;
 class QWidget;
 
+/**
+ * @brief Windows95スタイルのツリーコントロールの見た目にする
+ */
 class TraditionalWindowsStyleTreeControl {
 private:
 	QBrush br_branch;
@@ -15,7 +18,7 @@ private:
 	QPixmap pm_minus;
 public:
 	TraditionalWindowsStyleTreeControl();
-	bool drawPrimitive(QStyle::PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+	bool drawPrimitive(QStyle::PrimitiveElement element, QStyleOption const *option, QPainter *painter, QWidget const *widget = nullptr) const;
 };
 
 #endif // TRADITIONALWINDOWSSTYLETREECONTROL_H

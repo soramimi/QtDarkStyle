@@ -4,9 +4,12 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QDockWidget>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QPainterPath>
+#include <QPalette>
+#include <QProgressBar>
 #include <QTableWidget>
 #include "darkstylehelper.i"
 
@@ -103,7 +106,7 @@ struct TextureCacheItem {
 QString pixmapkey(QString const &name, QString const &role, QSize const &size, QColor const &color)
 {
 	QString key = "%1:%2:%3:%4:%5";
-	key = key.arg(name).arg(role).arg(size.width()).arg(size.height()).arg(QString().sprintf("%02X%02X%02X", color.red(), color.green(), color.blue()));
+	key = key.arg(name).arg(role).arg(size.width()).arg(size.height()).arg(QString::asprintf("%02X%02X%02X", color.red(), color.green(), color.blue()));
 	return key;
 }
 
@@ -169,7 +172,7 @@ DarkStyle::DarkStyle(QColor const &base_color)
 	: m(new Private)
 {
 	setBaseColor(base_color);
-	setDpiScalingEnabled(QApplication::testAttribute(Qt::AA_EnableHighDpiScaling));
+//	setDpiScalingEnabled(QApplication::testAttribute(Qt::AA_EnableHighDpiScaling));
 }
 
 DarkStyle::~DarkStyle()
@@ -378,8 +381,10 @@ QPixmap DarkStyle::pixmapFromImage(const QImage &image, QSize size) const
 {
 	QString key = pixmapkey(image.text("name"), image.text("role"), size, baseColor());
 
-	QPixmap *pm = QPixmapCache::find(key);
-	if (pm) return *pm;
+	QPixmap pm;
+	if (QPixmapCache::find(key, &pm)) {
+		return pm;
+	}
 
 	TextureCacheItem t;
 	t.key = key;
@@ -760,6 +765,11 @@ int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const
 		break;
 	case PM_IndicatorHeight:
 	case PM_IndicatorWidth:
+#ifdef Q_OS_WIN
+		val = 14;
+        break;
+#endif
+        // fallthru
 	case PM_ExclusiveIndicatorHeight:
 	case PM_ExclusiveIndicatorWidth:
 		val = 16;
@@ -795,7 +805,6 @@ QRect DarkStyle::indicatorRect(const QStyleOption *option, const QWidget *widget
 		auto e = std::min(w, h);
 		x += (extent - e) / 2;
 		y += (extent - e) / 2;
-		extent = e;
 	}
 	return {x, y, w, h};
 }
@@ -1156,7 +1165,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 					imagePainter.translate(sx + bsx, sy + bsy);
 					imagePainter.setPen(option->palette.buttonText().color());
 					imagePainter.setBrush(option->palette.buttonText());
-					imagePainter.setRenderHint(QPainter::Qt4CompatiblePainting);
+//					imagePainter.setRenderHint(QPainter::Qt4CompatiblePainting);
 
 					if (!(option->state & State_Enabled)) {
 						imagePainter.translate(1, 1);
@@ -1312,12 +1321,6 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 	}
 #endif
 	if (pe == PE_IndicatorCheckBox) {
-//		if (option->state & State_NoChange) {
-//			p->setPen(option->palette.windowText().color());
-//			p->fillRect(option->rect, option->palette.brush(QPalette::Button));
-//			p->drawRect(option->rect);
-//			p->drawLine(option->rect.topLeft(), option->rect.bottomRight());
-//		} else
 		{
 			QRect rect = indicatorRect(option, widget, option->rect);
 			int x = rect.x();
@@ -1331,7 +1334,7 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 				p->setPen(QPen(option->palette.windowText(), 2));
 				int w = extent - 4;
 				int h = extent - 4;
-				p->setClipRect(0, 0, w, h);
+				p->setClipRect(2, 2, w -3, h -3);
 				int x0 = w - 1;
 				int y0 = 1;
 				int n = w * 0.6;
@@ -1348,9 +1351,9 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 		return;
 	}
 	if (pe == PE_IndicatorRadioButton) {
-		QRectF rect = indicatorRect(option, widget, option->rect);
+		QRect rect = indicatorRect(option, widget, option->rect);
 		p->setPen(option->palette.dark().color());
-		drawShadeEllipse(p, option->rect, option->palette, QStyle::State_Sunken);
+		drawShadeEllipse(p, rect, option->palette, QStyle::State_Sunken);
 		if (option->state & (State_Sunken | State_On)) {
 			const int N = 3;
 			rect.adjust(N, N, -N, -N);
@@ -1532,7 +1535,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 	}
 #endif
 	if (ce == CE_ShapedFrame) {
-		if (auto const *o = qstyleoption_cast<QStyleOptionFrameV3 const *>(option)) {
+		if (auto const *o = qstyleoption_cast<QStyleOptionFrame const *>(option)) {
 			int lw = o->lineWidth;
 			if (lw > 0) {
 				QRect r = o->rect;
@@ -1687,7 +1690,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 
 			int x, y, w, h;
 			o->rect.getRect(&x, &y, &w, &h);
-			int tab = o->tabWidth;
+			int tab = 0;//o->tabWidth;
 			bool dis = !(o->state & State_Enabled);
 			bool checkable = (o->checkType != QStyleOptionMenuItem::NotCheckable);
 			bool checked = checkable && o->checked;
@@ -1767,12 +1770,6 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						p->drawPixmap(pmr.topLeft(), pixmap);
 #endif
 					}
-				}
-			} else {
-				if (o->icon.isNull()) {
-					checkcol = 0;
-				} else {
-					checkcol = o->maxIconWidth;
 				}
 			}
 
@@ -1881,7 +1878,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						if (!selected) {
 							r.adjust(0, 0, 0, -1);
 						}
-						p->fillRect(r, o->palette.background());
+						p->fillRect(r, o->palette.window());
 					}
 					// Left
 					if (visible1) {
@@ -1922,7 +1919,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						if (!selected) {
 							r.adjust(0, 0, -1, 0);
 						}
-						p->fillRect(r, o->palette.background());
+						p->fillRect(r, o->palette.window());
 					}
 					// Top
 					if (visible1) {
@@ -1963,7 +1960,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						if (!selected) {
 							r.adjust(0, 1, 0, 0);
 						}
-						p->fillRect(r, o->palette.background());
+						p->fillRect(r, o->palette.window());
 					}
 
 					// Left
@@ -2005,7 +2002,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 						if (!selected) {
 							r.adjust(1, 0, 0, 0);
 						}
-						p->fillRect(r, o->palette.background());
+						p->fillRect(r, o->palette.window());
 					}
 					// Top
 					if (visible1) {
@@ -2040,7 +2037,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 
 			QColor color(0, 128, 255);
 
-			bool horz = (o->orientation == Qt::Horizontal);
+			bool horz = o->state & QStyle::State_Horizontal;
 
 			QString key;
 			QImage const *image;
@@ -2172,7 +2169,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				return;
 			}
 
-			auto const *v2 = qstyleoption_cast<const QStyleOptionDockWidgetV2*>(o);
+			auto const *v2 = qstyleoption_cast<const QStyleOptionDockWidget*>(o);
 			bool verticalTitleBar = v2 && v2->verticalTitleBar;
 
 			if (verticalTitleBar) {
@@ -2183,8 +2180,8 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 				p->translate(-rect.left() + 1, -rect.top());
 			}
 
-			p->setBrush(option->palette.background().color().darker(110));
-			p->setPen(option->palette.background().color().darker(130));
+			p->setBrush(option->palette.color(QPalette::Normal, QPalette::Window).darker(110));
+			p->setPen(option->palette.color(QPalette::Normal, QPalette::Window).darker(130));
 			p->drawRect(rect.adjusted(0, 1, -1, -3));
 
 			int buttonMargin = 4;
@@ -2277,7 +2274,7 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 					o2.state |= QStyle::State_On;
 					break;
 				}
-				drawPrimitive(QStyle::PE_IndicatorViewItemCheck, &o2, p, widget);
+				drawPrimitive(QStyle::PE_IndicatorItemViewItemCheck, &o2, p, widget);
 			}
 
 			// draw the icon
@@ -2537,16 +2534,6 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 
 		{
 			QRect r = subControlRect(CC_ScrollBar, option, SC_ScrollBarSlider, widget);
-			int w, h;
-			if (ishorz) {
-				h = extent;
-				int d = r.height();
-				w = (d == 0) ? 0 : (h * r.width() / d);
-			} else {
-				w = extent;
-				int d = r.width();
-				h = (d == 0) ? 0 : (w * r.height() / d);
-			}
 #ifdef Q_OS_MAC // macだとズレて見えるので調整する
 			if (ishorz) {
 				r = r.translated(1, 0);
@@ -2652,7 +2639,7 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 
 				// draw background groove
 				QPixmap cache;
-				if (!QPixmapCache::find(key, cache)) {
+				if (!QPixmapCache::find(key, &cache)) {
 					cache = QPixmap(rect.size());
 					cache.fill(Qt::transparent);
 					QPainter groovePainter(&cache);
@@ -2735,7 +2722,7 @@ void DarkStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
 				QPainterPath path;
 				path.addEllipse(r);
 				QString handlePixmapName = pixmapkey(QLatin1String("slider_handle"), "", handle.size(), baseColor());
-				if (!QPixmapCache::find(handlePixmapName, cache)) {
+				if (!QPixmapCache::find(handlePixmapName, &cache)) {
 					cache = QPixmap(handle.size());
 					cache.fill(Qt::transparent);
 					QPainter handlePainter(&cache);
