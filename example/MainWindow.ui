@@ -207,7 +207,7 @@
             <rect>
              <x>170</x>
              <y>220</y>
-             <width>102</width>
+             <width>161</width>
              <height>19</height>
             </rect>
            </property>
@@ -220,7 +220,7 @@
             <rect>
              <x>170</x>
              <y>250</y>
-             <width>102</width>
+             <width>161</width>
              <height>19</height>
             </rect>
            </property>
@@ -233,7 +233,7 @@
             <rect>
              <x>170</x>
              <y>280</y>
-             <width>88</width>
+             <width>161</width>
              <height>19</height>
             </rect>
            </property>
@@ -246,7 +246,7 @@
             <rect>
              <x>170</x>
              <y>310</y>
-             <width>88</width>
+             <width>161</width>
              <height>19</height>
             </rect>
            </property>
@@ -496,6 +496,27 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="tab_13">
+       <attribute name="title">
+        <string>ページ</string>
+       </attribute>
+       <widget class="QTableWidget" name="tableWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>256</width>
+          <height>192</height>
+         </rect>
+        </property>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::SingleSelection</enum>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+       </widget>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -506,7 +527,7 @@
      <x>0</x>
      <y>0</y>
      <width>765</width>
-     <height>24</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">

@@ -42,6 +42,18 @@ MainWindow::MainWindow(QWidget *parent) :
 	font.setBold(true);
 	ui->tableWidget->item(0, 0)->setFont(font);
 
+	ui->tableWidget_2->setColumnCount(2);
+	ui->tableWidget_2->setRowCount(2);
+	ui->tableWidget_2->setHorizontalHeaderItem(0, new QTableWidgetItem("Hoge"));
+	ui->tableWidget_2->setItem(0, 0, new QTableWidgetItem("Hoge"));
+	ui->tableWidget_2->setItem(0, 1, new QTableWidgetItem("Fuga"));
+	ui->tableWidget_2->setItem(1, 0, new QTableWidgetItem("Piyo"));
+	ui->tableWidget_2->setItem(1, 1, new QTableWidgetItem("Pemo"));
+	QFont font2 = ui->tableWidget_2->item(0, 0)->font();
+	font2.setBold(true);
+	ui->tableWidget_2->item(0, 0)->setFont(font2);
+
+
 	ui->comboBox->addItem("Hoge");
 	ui->comboBox->addItem("Fuga");
 	ui->comboBox->addItem("Piyo");
