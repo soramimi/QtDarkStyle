@@ -50,6 +50,13 @@ void drawFrame(QPainter *pr, QRect const &r, QColor const &color_topleft, QColor
 	return drawFrame(pr, r.x(), r.y(), r.width(), r.height(), color_topleft, color_bottomright);
 }
 
+/**
+ * @brief RaisedやSunkenのある枠を描く
+ * @param p
+ * @param rect
+ * @param palette
+ * @param state
+ */
 void drawShadeFrame(QPainter *p, QRect const &rect, QPalette const &palette, QStyle::State state)
 {
 	QColor topleft;
@@ -64,7 +71,45 @@ void drawShadeFrame(QPainter *p, QRect const &rect, QPalette const &palette, QSt
 	drawFrame(p, rect, topleft, bottomright);
 }
 
-void drawShadeEllipse(QPainter *p, QRect const &rect, QPalette const &palette, QStyle::State state)
+/**
+ * @brief タブの外枠を描く
+ * @param p
+ * @param rect
+ * @param palette
+ */
+void drawTabFrame(QPainter *p, const QRect &rect, const QPalette &palette)
+{
+	p->save();
+	int x = rect.x();
+	int y = rect.y();
+	int w = rect.width();
+	int h = rect.height();
+	p->setClipRect(x, y, w, h);
+	p->fillRect(x, y, w, h, palette.color(QPalette::Window));
+	drawShadeFrame(p, rect, palette, QStyle::State_Raised);
+	p->restore();
+}
+
+/**
+ * @brief チェックボックスの枠（凹んだ矩形）を描く
+ * @param p
+ * @param rect
+ * @param palette
+ * @param state
+ */
+inline void drawCheckBoxFrame(QPainter *p, QRect const &rect, QPalette const &palette, QStyle::State state)
+{
+	drawShadeFrame(p, rect, palette, state);
+}
+
+/**
+ * @brief ラジオボタンの枠（凹んだ円）を描く
+ * @param p
+ * @param rect
+ * @param palette
+ * @param state
+ */
+void drawRadioButtonFrame(QPainter *p, QRect const &rect, QPalette const &palette, QStyle::State state)
 {
 	QColor topleft;
 	QColor bottomright;
@@ -81,19 +126,6 @@ void drawShadeEllipse(QPainter *p, QRect const &rect, QPalette const &palette, Q
 	p->drawArc(rect, 45 * 16, 180 * 16);
 	p->setPen(bottomright);
 	p->drawArc(rect, 225 * 16, 180 * 16);
-	p->restore();
-}
-
-void drawTabFrame(QPainter *p, const QRect &rect, const QPalette &palette)
-{
-	p->save();
-	int x = rect.x();
-	int y = rect.y();
-	int w = rect.width();
-	int h = rect.height();
-	p->setClipRect(x, y, w, h);
-	p->fillRect(x, y, w, h, palette.color(QPalette::Window));
-	drawShadeFrame(p, rect, palette, QStyle::State_Raised);
 	p->restore();
 }
 
@@ -172,7 +204,6 @@ DarkStyle::DarkStyle(QColor const &base_color)
 	: m(new Private)
 {
 	setBaseColor(base_color);
-//	setDpiScalingEnabled(QApplication::testAttribute(Qt::AA_EnableHighDpiScaling));
 }
 
 DarkStyle::~DarkStyle()
@@ -794,18 +825,25 @@ int DarkStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const
 	}
 }
 
+/**
+ * @brief チェックボックスとラジオボタンの凹みの矩形を求める
+ * @param option
+ * @param widget
+ * @param rect
+ * @return
+ */
 QRect DarkStyle::indicatorRect(const QStyleOption *option, const QWidget *widget, QRect const &rect) const
 {
 	int w = proxy()->pixelMetric(PM_IndicatorWidth, option, widget);
 	int h = proxy()->pixelMetric(PM_IndicatorHeight, option, widget);
 	int x = rect.x();
 	int y = rect.y();
-	int extent = std::min(rect.width(), rect.height());
-	if (extent > w || extent > h) {
-		auto e = std::min(w, h);
-		x += (extent - e) / 2;
-		y += (extent - e) / 2;
+#if 0
+	int extent = rect.height();
+	if (extent > h) {
+		y += (extent - h) / 2;
 	}
+#endif
 	return {x, y, w, h};
 }
 
@@ -1323,10 +1361,11 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 	if (pe == PE_IndicatorCheckBox) {
 		{
 			QRect rect = indicatorRect(option, widget, option->rect);
+			qDebug() << "PE_IndicatorCheckBox" << rect;
 			int x = rect.x();
 			int y = rect.y();
 			int extent = rect.height();
-			drawShadeFrame(p, rect, option->palette, State_Sunken);
+			drawCheckBoxFrame(p, rect, option->palette, State_Sunken);
 			if (option->state & (State_Sunken | State_On)) {
 				p->save();
 				p->translate(x + 2, y + 2);
@@ -1334,17 +1373,17 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 				p->setPen(QPen(option->palette.windowText(), 2));
 				int w = extent - 4;
 				int h = extent - 4;
-				p->setClipRect(2, 2, w -3, h -3);
+				p->setClipRect(1, 1, w - 2, h - 2);
 				int x0 = w - 1;
 				int y0 = 1;
-				int n = w * 0.6;
-				auto Do = [&](int x1, int y1){
+				int n = w * 0.55;
+				auto LiveTo = [&](int x1, int y1){
 					p->drawLine(x0, y0, x1, y1);
 					x0 = x1;
 					y0 = y1;
 				};
-				Do(x0 - n, h - 1);
-				Do(x0 - n, 1);
+				LiveTo(x0 - n, h - 1);
+				LiveTo(x0 - n, 1);
 				p->restore();
 			}
 		}
@@ -1352,8 +1391,9 @@ void DarkStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *option, Q
 	}
 	if (pe == PE_IndicatorRadioButton) {
 		QRect rect = indicatorRect(option, widget, option->rect);
+		qDebug() << "PE_IndicatorRadioButton" << rect;
 		p->setPen(option->palette.dark().color());
-		drawShadeEllipse(p, rect, option->palette, QStyle::State_Sunken);
+		drawRadioButtonFrame(p, rect, option->palette, QStyle::State_Sunken);
 		if (option->state & (State_Sunken | State_On)) {
 			const int N = 3;
 			rect.adjust(N, N, -N, -N);
