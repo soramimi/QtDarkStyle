@@ -18,7 +18,6 @@ SOURCES += \
     plugin/NinePatch.cpp \
     plugin/DarkStyle.cpp \
     plugin/DarkStylePlugin.cpp \
-    plugin/StandardStyle.cpp \
 	plugin/TraditionalWindowsStyleTreeControl.cpp
 
 HEADERS += \
@@ -27,7 +26,6 @@ HEADERS += \
     plugin/NinePatch.h \
     plugin/DarkStyle.h \
     plugin/DarkStylePlugin.h \
-    plugin/StandardStyle.h \
 	plugin/TraditionalWindowsStyleTreeControl.h
 
 FORMS +=
@@ -37,3 +35,5 @@ RESOURCES += \
 
 DISTFILES += \
     darkstyleplugin.json
+
+

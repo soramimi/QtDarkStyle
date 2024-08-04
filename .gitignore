@@ -1,2 +1,7 @@
 *.user
 _out
+*.autosave
+debug/
+ui_*
+Makefile*
+.qmake.stash
