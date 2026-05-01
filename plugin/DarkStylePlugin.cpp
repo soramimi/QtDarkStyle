@@ -26,9 +26,9 @@ void DarkStylePlugin::applyLightStyle(QApplication *app)
 {
     QStyle *style = createLightStyle();
     app->setStyle(style);
-#ifndef Q_OS_WIN
-    app->setPalette(style->standardPalette());
-#endif
+// #ifndef Q_OS_WIN
+//     app->setPalette(style->standardPalette());
+// #endif
 }
 
 
