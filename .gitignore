@@ -5,3 +5,4 @@ debug/
 ui_*
 Makefile*
 .qmake.stash
+build/
