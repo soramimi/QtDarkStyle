@@ -58,7 +58,18 @@ void drawFrame(QPainter *pr, QRect const &r, QColor const &color_topleft, QColor
 
 void drawSelectedItemFrame(QPainter *p, QRect rect, bool focus)
 {
+	QPen pen;
 	QColor color = selectionColor();
+	if (focus) {
+		pen = {Qt::black, 1};
+	} else {
+		QColor gray(224, 224, 224);
+		int r = (color.red() + gray.red()) / 2;
+		int g = (color.green() + gray.green()) / 2;
+		int b = (color.blue() + gray.blue()) / 2;
+		color = QColor(r, g, b);
+		pen = Qt::NoPen;
+	}
 
 	int x, y, w, h;
 	x = rect.x();
@@ -67,7 +78,7 @@ void drawSelectedItemFrame(QPainter *p, QRect rect, bool focus)
 	h = rect.height();
 
 	p->setBrush(color);
-	p->setPen(QPen(Qt::black, 1));
+	p->setPen(pen);
 	p->drawRect(x, y, w - 1, h - 1);
 }
 
@@ -156,7 +167,7 @@ void LightStyle::drawPrimitive(PrimitiveElement element, QStyleOption const *opt
 		}
 		return;
 	}
-	QProxyStyle::drawPrimitive(element, option, painter, widget);
+	Base::drawPrimitive(element, option, painter, widget);
 }
 
 static void drawMenuBarBG(QPainter *p, const QStyleOption *option, QWidget const *widget)
@@ -216,7 +227,10 @@ void LightStyle::drawControl(ControlElement element, const QStyleOption *opt, QP
 			if (!pix.isNull()) {
 				drawItemPixmap(p, o->rect, alignment, pix);
 			} else {
+				p->save();
+				p->setFont(o->font);
 				drawItemText(p, o->rect, alignment, o->palette, o->state & State_Enabled, o->text, textRole);
+				p->restore();
 			}
 		}
 		return;
@@ -279,7 +293,10 @@ void LightStyle::drawControl(ControlElement element, const QStyleOption *opt, QP
 					p->setPen(o->palette.color(cg, QPalette::Text));
 					p->drawRect(textRect.adjusted(0, 0, -1, -1));
 				}
+				p->save();
+				p->setFont(o->font);
 				drawItemText(p, textRect, o->displayAlignment, o->palette, enabled, o->text, QPalette::Text);
+				p->restore();
 			}
 
 			p->restore();
@@ -291,7 +308,7 @@ void LightStyle::drawControl(ControlElement element, const QStyleOption *opt, QP
 		if (opt->state & QStyle::State_Selected) {
 			drawSelectedItemFrame(p, opt->rect, true);
 		}
-		QProxyStyle::drawControl(element, opt, p, widget);
+		Base::drawControl(element, opt, p, widget);
 		return;
 #endif
 		if (auto const *o = qstyleoption_cast<QStyleOptionMenuItem const *>(opt)) {
@@ -450,36 +467,11 @@ void LightStyle::drawControl(ControlElement element, const QStyleOption *opt, QP
 		}
 		return;
 	}
-	QProxyStyle::drawControl(element, opt, p, widget);
+	Base::drawControl(element, opt, p, widget);
 }
 
-void LightStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex *opt, QPainter *p, const QWidget *widget) const
+void LightStyle::drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
-	QProxyStyle::drawComplexControl(cc, opt, p, widget);
-}
-
-int LightStyle::styleHint(StyleHint stylehint, const QStyleOption *opt, const QWidget *widget, QStyleHintReturn *returnData) const
-{
-	switch (stylehint) {
-	case SH_ComboBox_ListMouseTracking:
-		return 1;
-	}
-	return QProxyStyle::styleHint(stylehint, opt, widget, returnData);
-}
-
-int LightStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
-{
-	return QProxyStyle::pixelMetric(metric, option, widget);
-}
-
-QSize LightStyle::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &contentsSize, const QWidget *w) const
-{
-	QSize newSize = QProxyStyle::sizeFromContents(ct, opt, contentsSize, w);
-	switch (ct) {
-	case CT_MenuItem:
-		newSize.rwidth() += 8;
-		break;
-	}
-	return newSize;
+	Base::drawComplexControl(control, option, painter, widget);
 }
 

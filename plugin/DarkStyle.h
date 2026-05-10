@@ -1,12 +1,14 @@
 #ifndef DARKSTYLE_H
 #define DARKSTYLE_H
 
+#include "MyCommonStyle.h"
+
 #include <QCommonStyle>
 
 class QStyleOptionViewItem;
 
-class DarkStyle : public QCommonStyle {
-public:
+class DarkStyle : public MyCommonStyle<QCommonStyle> {
+	using Base = MyCommonStyle<QCommonStyle>;
 private:
 	struct Private;
 	Private *m;
@@ -57,7 +59,7 @@ public:
 	void setScrollBarExtent(int n);
 	void setDpiScalingEnabled(bool f);
 
-	QPalette standardPalette() const;
+	QPalette standardPalette() const override;
 	QSize sizeFromContents(ContentsType type, const QStyleOption *option, const QSize &size, const QWidget *widget) const override;
 	void polish(QPalette &palette) override;
 	int pixelMetric(PixelMetric metric, const QStyleOption *option = nullptr, const QWidget *widget = nullptr) const override;
