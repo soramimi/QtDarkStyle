@@ -524,7 +524,7 @@ void DarkStyle::loadImages()
 		correctImage(&m->vsb.slider.im_hover  , true, 0, 0, 224);
 	}
 
-	m->check_msdf = loadImage(QLatin1String(":/themes/check.png"));
+	m->check_msdf = loadImage(QLatin1String(":/themes/check.msdf.png"));
 
 	m->images_loaded = true;
 }
@@ -563,6 +563,7 @@ std::pair<QColor, QColor> DarkStyle::menuBorderColors(Theme theme) const
 	} else if (theme == DarkStyle::Theme::Light) {
 		return {color(255), color(160)};
 	}
+	return {};
 }
 
 void DarkStyle::drawGutter(QPainter *p, const QRect &r) const

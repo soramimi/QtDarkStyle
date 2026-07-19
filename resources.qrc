@@ -24,6 +24,6 @@
         <file>themes/light/sb/vsb_page_bg.png</file>
         <file>themes/light/sb/vsb_slider.png</file>
         <file>themes/light/sb/vsb_sub_line.png</file>
-        <file>themes/check.png</file>
+        <file>themes/check.msdf.png</file>
     </qresource>
 </RCC>
