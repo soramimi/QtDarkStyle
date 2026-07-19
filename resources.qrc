@@ -12,5 +12,17 @@
         <file>darktheme/button/button_press.png</file>
         <file>darktheme/progress/horz.png</file>
         <file>darktheme/progress/vert.png</file>
+        <file>themes/light/button/button_normal.png</file>
+        <file>themes/light/button/button_press.png</file>
+        <file>themes/light/progress/horz.png</file>
+        <file>themes/light/progress/vert.png</file>
+        <file>themes/light/sb/hsb_add_line.png</file>
+        <file>themes/light/sb/hsb_page_bg.png</file>
+        <file>themes/light/sb/hsb_slider.png</file>
+        <file>themes/light/sb/hsb_sub_line.png</file>
+        <file>themes/light/sb/vsb_add_line.png</file>
+        <file>themes/light/sb/vsb_page_bg.png</file>
+        <file>themes/light/sb/vsb_slider.png</file>
+        <file>themes/light/sb/vsb_sub_line.png</file>
     </qresource>
 </RCC>
