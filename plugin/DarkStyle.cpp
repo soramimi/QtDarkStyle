@@ -13,6 +13,8 @@
 #include <QTableWidget>
 #include "darkstylehelper.i"
 
+#define THEME Theme::Dark
+
 #define MBI_NORMAL                  1
 #define MBI_HOT                     2
 #define MBI_PUSHED                  3
@@ -84,6 +86,44 @@ void drawRadioButtonFrame(QPainter *p, QRect const &rect, QPalette const &palett
 	p->restore();
 }
 
+/**
+ * @brief MSDF画像をレンダリングする
+ * @param msdfimage
+ * @param size
+ * @return
+ */
+QImage render_msdf_image(QImage const &msdfimage, QSize size)
+{
+	if (msdfimage.isNull()) return {};
+	int w = size.width();
+	int h = size.height();
+	QImage src = msdfimage.convertToFormat(QImage::Format_RGBA8888);
+	src = src.scaled(w, h, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+	QImage dst(w, h, QImage::Format_Grayscale8);
+	for (int y = 0; y < h; ++y) {
+		uint8_t const *s = (uint8_t const *)src.constScanLine(y);
+		uint8_t *d = (uint8_t *)dst.scanLine(y);
+		for (int x = 0; x < w; ++x) {
+			auto Median = [](uint8_t r, uint8_t g, uint8_t b) {
+				if (r < g) {
+					if (g < b) return g; // r < g < b
+					else if (r < b) return b; // r < b <= g
+					else return r; // b <= r <= g
+				} else {
+					if (r < b) return r; // g < r < b
+					else if (g < b) return b; // g < b <= r
+					else return g; // b <= g <= r
+				}
+			};
+			uint8_t r = s[4 * x + 0];
+			uint8_t g = s[4 * x + 1];
+			uint8_t b = s[4 * x + 2];
+			d[x] = Median(r, g, b) < 128 ? 0 : 255;
+		}
+	}
+	return dst;
+}
+
 
 struct TextureCacheItem {
 	QString key;
@@ -152,8 +192,7 @@ QRgb correctBrightness(QRgb color, int light, int alpha)
 // static const int TEXTURE_CACHE_SIZE = 100;
 
 struct DarkStyle::Private {
-	Theme theme = Theme::Dark;
-	// Theme theme = Theme::Light;
+	Theme theme = THEME;
 	
 	QColor base_color;
 	bool images_loaded = false;
@@ -168,6 +207,8 @@ struct DarkStyle::Private {
 
 	QImage progress_horz;
 	QImage progress_vert;
+
+	QImage check_msdf;
 
 	TraditionalWindowsStyleTreeControl legacy_windows;
 
@@ -430,58 +471,60 @@ void DarkStyle::loadImages()
 		setBaseColor(Qt::white);
 	}
 
-	if (1) {
+	if (theme() == Theme::Dark) {
+		m->button_normal        = loadColorizedImage(QLatin1String(":/darktheme/button/button_normal.png"), QLatin1String("normal"));
+		m->button_press         = loadColorizedImage(QLatin1String(":/darktheme/button/button_press.png"), QLatin1String("press"));
 
-		if (theme() == Theme::Dark) {
-			m->button_normal        = loadColorizedImage(QLatin1String(":/darktheme/button/button_normal.png"), QLatin1String("normal"));
-			m->button_press         = loadColorizedImage(QLatin1String(":/darktheme/button/button_press.png"), QLatin1String("press"));
+		m->hsb.sub_line         = generateButtonImages(QLatin1String(":/darktheme/hsb/hsb_sub_line.png"));
+		m->hsb.add_line         = generateButtonImages(QLatin1String(":/darktheme/hsb/hsb_add_line.png"));
+		m->hsb.page_bg          = loadColorizedImage(QLatin1String(":/darktheme/hsb/hsb_page_bg.png"));
+		m->hsb.slider.im_normal = loadColorizedImage(QLatin1String(":/darktheme/hsb/hsb_slider.png"));
+		m->hsb.slider.im_hover  = generateHoverImage(m->hsb.slider.im_normal);
 
-			m->hsb.sub_line         = generateButtonImages(QLatin1String(":/darktheme/hsb/hsb_sub_line.png"));
-			m->hsb.add_line         = generateButtonImages(QLatin1String(":/darktheme/hsb/hsb_add_line.png"));
-			m->hsb.page_bg          = loadColorizedImage(QLatin1String(":/darktheme/hsb/hsb_page_bg.png"));
-			m->hsb.slider.im_normal = loadColorizedImage(QLatin1String(":/darktheme/hsb/hsb_slider.png"));
-			m->hsb.slider.im_hover  = generateHoverImage(m->hsb.slider.im_normal);
+		m->vsb.sub_line         = generateButtonImages(QLatin1String(":/darktheme/vsb/vsb_sub_line.png"));
+		m->vsb.add_line         = generateButtonImages(QLatin1String(":/darktheme/vsb/vsb_add_line.png"));
+		m->vsb.page_bg          = loadColorizedImage(QLatin1String(":/darktheme/vsb/vsb_page_bg.png"));
+		m->vsb.slider.im_normal = loadColorizedImage(QLatin1String(":/darktheme/vsb/vsb_slider.png"));
+		m->vsb.slider.im_hover  = generateHoverImage(m->vsb.slider.im_normal);
 
-			m->vsb.sub_line         = generateButtonImages(QLatin1String(":/darktheme/vsb/vsb_sub_line.png"));
-			m->vsb.add_line         = generateButtonImages(QLatin1String(":/darktheme/vsb/vsb_add_line.png"));
-			m->vsb.page_bg          = loadColorizedImage(QLatin1String(":/darktheme/vsb/vsb_page_bg.png"));
-			m->vsb.slider.im_normal = loadColorizedImage(QLatin1String(":/darktheme/vsb/vsb_slider.png"));
-			m->vsb.slider.im_hover  = generateHoverImage(m->vsb.slider.im_normal);
+		m->progress_horz = loadImage(QLatin1String(":/darktheme/progress/horz.png"));
+		m->progress_vert = loadImage(QLatin1String(":/darktheme/progress/vert.png"));
+	} else if (theme() == Theme::Light) {
+		m->button_normal        = loadColorizedImage(QLatin1String(":/themes/light/button/button_normal.png"), QLatin1String("normal"));
+		m->button_press         = loadColorizedImage(QLatin1String(":/themes/light/button/button_press.png"), QLatin1String("press"));
 
-			m->progress_horz = loadImage(QLatin1String(":/darktheme/progress/horz.png"));
-			m->progress_vert = loadImage(QLatin1String(":/darktheme/progress/vert.png"));
-		} else if (theme() == Theme::Light) {
-			m->button_normal        = loadColorizedImage(QLatin1String(":/themes/light/button/button_normal.png"), QLatin1String("normal"));
-			m->button_press         = loadColorizedImage(QLatin1String(":/themes/light/button/button_press.png"), QLatin1String("press"));
+		m->hsb.sub_line         = generateButtonImages(QLatin1String(":/themes/light/sb/hsb_sub_line.png"));
+		m->hsb.add_line         = generateButtonImages(QLatin1String(":/themes/light/sb/hsb_add_line.png"));
+		m->hsb.page_bg          = loadColorizedImage(QLatin1String(":/themes/light/sb/hsb_page_bg.png"));
+		m->hsb.slider.im_normal = loadColorizedImage(QLatin1String(":/themes/light/sb/hsb_slider.png"));
+		m->hsb.slider.im_hover  = generateHoverImage(m->hsb.slider.im_normal);
 
-			m->hsb.sub_line         = generateButtonImages(QLatin1String(":/themes/light/sb/hsb_sub_line.png"));
-			m->hsb.add_line         = generateButtonImages(QLatin1String(":/themes/light/sb/hsb_add_line.png"));
-			m->hsb.page_bg          = loadColorizedImage(QLatin1String(":/themes/light/sb/hsb_page_bg.png"));
-			m->hsb.slider.im_normal = loadColorizedImage(QLatin1String(":/themes/light/sb/hsb_slider.png"));
-			m->hsb.slider.im_hover  = generateHoverImage(m->hsb.slider.im_normal);
+		m->vsb.sub_line         = generateButtonImages(QLatin1String(":/themes/light/sb/vsb_sub_line.png"));
+		m->vsb.add_line         = generateButtonImages(QLatin1String(":/themes/light/sb/vsb_add_line.png"));
+		m->vsb.page_bg          = loadColorizedImage(QLatin1String(":/themes/light/sb/vsb_page_bg.png"));
+		m->vsb.slider.im_normal = loadColorizedImage(QLatin1String(":/themes/light/sb/vsb_slider.png"));
+		m->vsb.slider.im_hover  = generateHoverImage(m->vsb.slider.im_normal);
 
-			m->vsb.sub_line         = generateButtonImages(QLatin1String(":/themes/light/sb/vsb_sub_line.png"));
-			m->vsb.add_line         = generateButtonImages(QLatin1String(":/themes/light/sb/vsb_add_line.png"));
-			m->vsb.page_bg          = loadColorizedImage(QLatin1String(":/themes/light/sb/vsb_page_bg.png"));
-			m->vsb.slider.im_normal = loadColorizedImage(QLatin1String(":/themes/light/sb/vsb_slider.png"));
-			m->vsb.slider.im_hover  = generateHoverImage(m->vsb.slider.im_normal);
+		m->progress_horz = loadImage(QLatin1String(":/themes/light/progress/horz.png"));
+		m->progress_vert = loadImage(QLatin1String(":/themes/light/progress/vert.png"));
 
-			m->progress_horz = loadImage(QLatin1String(":/themes/light/progress/horz.png"));
-			m->progress_vert = loadImage(QLatin1String(":/themes/light/progress/vert.png"));
+		m->progress_vert = loadImage(QLatin1String(":/themes/light/progress/vert.png"));
 
-			correctImage(&m->hsb.sub_line         , true, 0, 0, 160);
-			correctImage(&m->hsb.add_line         , true, 0, 0, 160);
-			correctImage(&m->hsb.page_bg          , true, 0, 0, 160, 0.5f);
-			correctImage(&m->hsb.slider.im_normal , true, 0, 0, 160);
-			correctImage(&m->hsb.slider.im_hover  , true, 0, 0, 224);
 
-			correctImage(&m->vsb.sub_line         , true, 0, 0, 160);
-			correctImage(&m->vsb.add_line         , true, 0, 0, 160);
-			correctImage(&m->vsb.page_bg          , true, 0, 0, 160, 0.5f);
-			correctImage(&m->vsb.slider.im_normal , true, 0, 0, 160);
-			correctImage(&m->vsb.slider.im_hover  , true, 0, 0, 224);
-		}
+		correctImage(&m->hsb.sub_line         , true, 0, 0, 160);
+		correctImage(&m->hsb.add_line         , true, 0, 0, 160);
+		correctImage(&m->hsb.page_bg          , true, 0, 0, 160, 0.5f);
+		correctImage(&m->hsb.slider.im_normal , true, 0, 0, 160);
+		correctImage(&m->hsb.slider.im_hover  , true, 0, 0, 224);
+
+		correctImage(&m->vsb.sub_line         , true, 0, 0, 160);
+		correctImage(&m->vsb.add_line         , true, 0, 0, 160);
+		correctImage(&m->vsb.page_bg          , true, 0, 0, 160, 0.5f);
+		correctImage(&m->vsb.slider.im_normal , true, 0, 0, 160);
+		correctImage(&m->vsb.slider.im_hover  , true, 0, 0, 224);
 	}
+
+	m->check_msdf = loadImage(QLatin1String(":/themes/check.png"));
 
 	m->images_loaded = true;
 }
@@ -1242,11 +1285,11 @@ void DarkStyle::drawPrimitive(PrimitiveElement element, const QStyleOption *opti
 		} else if (theme() == Theme::Light) {
 			QRect r = option->rect;
 			painter->fillRect(r, Qt::red);
-			drawFrame(painter, r, color(240), color(240));
+			drawFrame(painter, r, color(240), color(10));
 			r = r.adjusted(1, 1, -1, -1);
 			drawFrame(painter, r, color(255), color(160));
 			r = r.adjusted(1, 1, -1, -1);
-			painter->fillRect(r, color(255));
+			painter->fillRect(r, color(224));
 		}
 		return;
 	}
@@ -1364,48 +1407,56 @@ void DarkStyle::drawPrimitive(PrimitiveElement element, const QStyleOption *opti
 		return;
 	}
 #endif
-	if (element == PE_IndicatorCheckBox) {
-		{
-			QRect rect = indicatorRect(option, widget, option->rect);
-			// qDebug() << "PE_IndicatorCheckBox" << rect;
-			int x = rect.x();
-			int y = rect.y();
-			int extent = rect.height();
-			drawCheckBoxFrame(painter, rect, option->palette, State_Sunken);
-			if (option->state & (State_Sunken | State_On)) {
-				painter->save();
-				painter->translate(x + 2, y + 2);
-				painter->setRenderHint(QPainter::Antialiasing);
-				painter->setPen(QPen(option->palette.windowText(), 2));
-				int w = extent - 4;
-				int h = extent - 4;
-				painter->setClipRect(1, 1, w - 2, h - 2);
-				int x0 = w - 1;
-				int y0 = 1;
-				int n = w * 0.55;
-				auto LiveTo = [&](int x1, int y1){
-					painter->drawLine(x0, y0, x1, y1);
-					x0 = x1;
-					y0 = y1;
-				};
-				LiveTo(x0 - n, h - 1);
-				LiveTo(x0 - n, 1);
-				painter->restore();
-			}
+	auto DrawCheckBox = [this](QPainter *painter, PrimitiveElement element, QStyleOption const *option){
+		QRect rect = option->rect;
+		// draw the checkbox/radiobutton frame
+		if (element == PE_IndicatorCheckBox) {
+			drawCheckBoxFrame(painter, rect, option->palette, QStyle::State_Sunken);
+		} else {
+			drawRadioButtonFrame(painter, rect, option->palette, QStyle::State_Sunken);
 		}
-		return;
-	}
-	if (element == PE_IndicatorRadioButton) {
-		QRect rect = indicatorRect(option, widget, option->rect);
-		painter->setPen(option->palette.dark().color());
-		drawRadioButtonFrame(painter, rect, option->palette, QStyle::State_Sunken);
+		// draw the checkmark or radio button dot if the checkbox/radiobutton is checked
 		if (option->state & (State_Sunken | State_On)) {
-			const int N = 3;
-			rect.adjust(N, N, -N, -N);
-			painter->setRenderHint(QPainter::Antialiasing);
-			painter->setBrush(option->palette.windowText());
-			painter->drawEllipse(rect);
+			painter->save();
+			QColor color;
+			if (theme() == Theme::Dark) {
+				color = QColor(255, 255, 255);
+			} else {
+				color = QColor(0, 0, 0);
+			}
+			if (element == PE_IndicatorCheckBox) {
+				drawCheckBoxFrame(painter, rect, option->palette, QStyle::State_Sunken);
+				int x = rect.x();
+				int y = rect.y();
+				int extent = rect.height() - 2;
+				QPixmap pm;
+				{
+					QString key = pixmapkey("checkbox", "checked", QSize(extent, extent), baseColor());
+					if (!QPixmapCache::find(key, &pm)) {
+						QImage img = render_msdf_image(m->check_msdf, QSize(extent * 4, extent * 4)); // 4倍の解像度でレンダリングして縮小する
+						img = img.scaled(extent, extent);
+						img.invertPixels();
+						pm = QPixmap::fromImage(img);
+						QPixmapCache::insert(key, pm);
+					}
+				}
+				QRect r(x + 1, y + 1, extent, extent);
+				QRegion region(QBitmap::fromPixmap(pm));
+				painter->setClipRegion(region.translated(r.topLeft()));
+				painter->fillRect(r, color);
+			} else if (element == PE_IndicatorRadioButton) {
+				const int N = 3;
+				rect.adjust(N, N, -N, -N);
+				painter->setRenderHint(QPainter::Antialiasing);
+				painter->setPen(Qt::NoPen);
+				painter->setBrush(color);
+				painter->drawEllipse(rect);
+			}
+			painter->restore();
 		}
+	};
+	if (element == PE_IndicatorCheckBox || element == PE_IndicatorRadioButton) {
+		DrawCheckBox(painter, element, option);
 		return;
 	}
 	Base::drawPrimitive(element, option, painter, widget);
@@ -1772,19 +1823,18 @@ void DarkStyle::drawControl(ControlElement ce, const QStyleOption *option, QPain
 #else
 				QRectF checkRectF(option->rect.left() + boxMargin + checkColHOffset, option->rect.center().y() - boxWidth / 2 + 1, boxWidth, boxWidth);
 				QRect checkRect = checkRectF.toRect();
-				checkRect.setWidth(checkRect.height()); // avoid .toRect() round error results in non-perfect square
+				checkRect.setWidth(checkRect.height());
 #endif
-				checkRect = visualRect(o->direction, o->rect, checkRect);
+				int extent = p->fontMetrics().ascent();
 
 				QStyleOptionButton box;
 				box.QStyleOption::operator=(*option);
-				box.rect = checkRect;
+				box.rect = QRect(checkRect.x() + (checkRect.width() - extent) / 2, checkRect.y() + (checkRect.height() - extent) / 2, extent, extent);
 				if (checked) {
 					box.state |= State_On;
 				}
 				drawPrimitive(PE_IndicatorCheckBox, &box, p, widget);
 			}
-
 
 			if (!ignoreCheckMark) {
 				if (!o->icon.isNull()) {
