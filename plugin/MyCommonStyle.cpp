@@ -8,6 +8,8 @@ bool MyCommonStyleBase::x_styleHint(int *value, QStyle::StyleHint hint, const QS
 	case QStyle::SH_UnderlineShortcut:
 		*value = 1; // 常にアクセラレータ下線を表示
 		return true;
+	case QStyle::SH_Menu_MouseTracking:
+	case QStyle::SH_MenuBar_MouseTracking:
 	case QStyle::SH_ComboBox_ListMouseTracking:
 		*value = 1;
 		return true;
@@ -17,8 +19,10 @@ bool MyCommonStyleBase::x_styleHint(int *value, QStyle::StyleHint hint, const QS
 
 bool MyCommonStyleBase::x_pixelMetric(int *value, QStyle::PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
-	switch (metric) {
-	}
+	// switch (metric) {
+	// default:
+	// 	break;
+	// }
 	return false;
 }
 
@@ -27,9 +31,7 @@ void MyCommonStyleBase::x_sizeFromContents(QSize *value, QStyle::ContentsType ty
 	if (QStyleOptionMenuItem const *o = qstyleoption_cast<QStyleOptionMenuItem const *>(option)) {
 		switch (type) {
 		case QStyle::CT_MenuBarItem:
-			if (QStyleOptionMenuItem const *o = qstyleoption_cast<QStyleOptionMenuItem const *>(option)) {
-				value->rwidth() = o->fontMetrics.size(0, o->text).width() + 4;
-			}
+			value->rwidth() = o->fontMetrics.size(0, o->text).width() + 4;
 			value->rheight() = 24;
 			return;
 		}
