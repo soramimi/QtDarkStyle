@@ -25,5 +25,9 @@
         <file>themes/light/sb/vsb_slider.png</file>
         <file>themes/light/sb/vsb_sub_line.png</file>
         <file>themes/check.msdf.png</file>
+        <file>themes/checkbox_checked.svg</file>
+        <file>themes/checkbox_unchecked.svg</file>
+        <file>themes/radiobutton_checked.svg</file>
+        <file>themes/radiobutton_unchecked.svg</file>
     </qresource>
 </RCC>

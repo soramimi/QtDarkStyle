@@ -1,6 +1,7 @@
 QMAKE_PROJECT_DEPTH = 0
 
-QT       += core gui widgets
+QT       += core gui widgets \
+	svg
 
 TARGET = darkstyleplugin
 TEMPLATE = lib

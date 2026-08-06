@@ -6,7 +6,6 @@
 #include <QProgressBar>
 #include <QProxyStyle>
 
-
 int main(int argc, char *argv[])
 {
 	if (0) {
